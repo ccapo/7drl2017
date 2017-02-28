@@ -13,3 +13,15 @@
 * Reserve time to test and tweak game balance
     * Make sure creature AI behaviour works correctly
     * Ensure difficulty is challenging, but not punishing
+* To Run:
+```bash
+# Clone this repository
+git clone https://ccapo@bitbucket.org/ccapo/7drl2017.git escapeCraft
+# Go into the repository
+cd escapeCraft
+# Install dependencies
+npm install
+# Run the app
+npm start
+```
+

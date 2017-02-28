@@ -1,0 +1,165 @@
+<html>
+  <script src="rot.min.js"></script>
+  <script type="text/javascript">
+    const ipc = require('electron').ipcRenderer;
+    const BrowserWindow = require('electron').remote.BrowserWindow;
+
+    ipc.on('generate-map', function (event, options, fromWindowId) {
+      const fromWindow = BrowserWindow.fromId(fromWindowId);
+      const map = generateMap(options.seed, options.w, options.h);
+      fromWindow.webContents.send('map-generated', options, map);
+      window.close();
+    })
+
+    const symType = Object.freeze({FLOOR: 0, WALL: 1, ITEM: 2});
+    let width;
+    let height;
+    let cells = [];
+    let floorCells = [];
+    let pathExists = false;
+
+    /**
+     * Generate a map
+     * @param seed
+     * @param width
+     * @param height
+     * @returns {{seed: (*|number), width: *, height: *, cells: (Array|*), floorCells: Array}}
+     */
+    function generateMap(seed, w, h) {
+      width = w;
+      height = h;
+      seed = seed || 0;
+      if(seed !== 0) {
+        ROT.RNG.setSeed(seed);
+      } else {
+        seed = ROT.RNG.getSeed();
+      }
+      let origSeed = seed;
+
+      // Loop map creation until fraction of cells is greater than 50% floor cells.
+      let fraction = 0.0;
+      while(fraction < 0.5) {
+        let mapCA = new ROT.Map.Cellular(width, height);
+
+        // Cells with 50% probability
+        mapCA.randomize(0.5);
+
+        cells = new Array(width * height);
+        floorCells = [];
+        pathExists = false;
+
+        // Generate 4 generations
+        for(let i = 0; i < 3; i++) {
+          mapCA.create(null);
+        }
+        mapCA.create(cellularAutomata);
+
+        // Seal room on the top and bottom
+        for(let x = 0; x < width; x++) {
+          setWall(x);
+          setWall(x + (height - 1)*width);
+        }
+
+        // Seal room on the left and right
+        for(let y = 0; y < height; y++) {
+          setWall(y*width);
+          setWall((width - 1) + y*width);
+        }
+
+        // Select a point in floorCells at random
+        let index = Math.floor(ROT.RNG.getUniform() * floorCells.length);
+        let key = floorCells.splice(index, 1)[0];
+        let cx = key % width;
+        let cy = Math.floor(key/width);
+
+        // Prepare dijkstra path to given reference coordinates
+        let dijkstra = new ROT.Path.Dijkstra(cx, cy, isPassable);
+
+        // Compute path to each floor cell, if path does not exist, fill in disconnected region
+        for(let i = 0; i < floorCells.length; i++) {
+          let dx = floorCells[i] % width;
+          let dy = Math.floor(floorCells[i]/width);
+          pathExists = false;
+          dijkstra.compute(dx, dy, function(x, y) {
+            pathExists = true;
+          });
+          if(!pathExists) {
+            floodFill(dx, dy, symType.WALL);
+          }
+        }
+
+        // Compute the fraction of cells that are floor type compared to the total available number of cells
+        fraction = parseFloat(floorCells.length)/parseFloat(width*height);
+        //ROT.RNG.setSeed(++seed);
+      }
+
+      return {
+        seed: origSeed,
+        width: width,
+        height: height,
+        cells: cells,
+        floorCells: floorCells
+      };
+    }
+
+    /**
+     * Input callback informs about map structure
+     * @param x
+     * @param y
+     * @returns {boolean}
+     */
+    function isPassable(x, y) {
+      return (cells[x + y*width] === 0);
+    }
+
+    /**
+     * Cellular automata callback
+     * @param x
+     * @param y
+     * @param value
+     */
+    function cellularAutomata(x, y, value) {
+      let key = x + y*width;
+      if(value) {
+        floorCells.push(key);
+        cells[key] = symType.FLOOR;
+      } else {
+        cells[key] = symType.WALL;
+      }
+    }
+
+    /**
+     * Set wall
+     * @param key
+     */
+    function setWall(key) {
+      let index = floorCells.indexOf(key);
+      if(index > -1) floorCells.splice(index, 1);
+      cells[key] = symType.WALL;
+    }
+
+    /**
+     * Fill (over write) all cells that are not the cell type
+     * @param x
+     * @param y
+     * @param type
+     */
+    function floodFill(x, y, type) {
+      // Test if key exists in map.cells
+      let key = x + y*width;
+      if(key >= 0 && key < cells.length) {
+        // Test tile type
+        if(cells[key] !== type) {
+          cells[key] = type;
+          let index = floorCells.indexOf(key);
+          floorCells.splice(index, 1);
+
+          floodFill(x - 1, y, type);
+          floodFill(x + 1, y, type);
+          floodFill(x, y - 1, type);
+          floodFill(x, y + 1, type);
+        }
+      }
+    }
+  </script>
+</html>

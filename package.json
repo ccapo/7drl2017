@@ -1,0 +1,25 @@
+{
+  "name": "7drl2017",
+  "version": "0.0.1",
+  "description": "The Minotaur",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": "https://github.com/ccapo/7drl2017",
+  "keywords": [
+    "Electron",
+    "quick",
+    "start",
+    "tutorial",
+    "demo"
+  ],
+  "author": "Chris Capobianco",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^1.4.1"
+  },
+  "dependencies": {
+    "rot-js": "git+https://github.com/ccapo/rot.js.git#npm-deploy"
+  }
+}
