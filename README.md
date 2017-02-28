@@ -1,6 +1,6 @@
 # 2017 7DRL Challenge Entry
 * Title: EscapeCraft
-* Start with Electron Boilerplate
+* Using Electron Boilerplate and ROT.js library
 * Trapped in deep in a cave, must escape to survive
     * Limit number of levels to five, ramping difficulty appropriately
     * Craft weapons from raw or other crafted items
