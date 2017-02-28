@@ -17,11 +17,13 @@
 ```bash
 # Clone this repository
 git clone https://ccapo@bitbucket.org/ccapo/7drl2017.git escapeCraft
+
 # Go into the repository
 cd escapeCraft
+
 # Install dependencies
 npm install
+
 # Run the app
 npm start
 ```
-
