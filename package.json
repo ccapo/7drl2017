@@ -1,7 +1,7 @@
 {
   "name": "7drl2017",
-  "version": "0.0.1",
-  "description": "The Minotaur",
+  "version": "0.1.0",
+  "description": "EscapeCraft",
   "main": "main.js",
   "scripts": {
     "start": "electron ."
@@ -9,10 +9,7 @@
   "repository": "https://github.com/ccapo/7drl2017",
   "keywords": [
     "Electron",
-    "quick",
-    "start",
-    "tutorial",
-    "demo"
+    "roguelike"
   ],
   "author": "Chris Capobianco",
   "license": "MIT",
