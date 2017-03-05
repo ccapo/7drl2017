@@ -6,7 +6,7 @@ const Game = require('./game');
 
 const genMapBtn = document.getElementById('gen-map-btn');
 
-genMapBtn.addEventListener('click', function (clickEvent) {
+genMapBtn.addEventListener('click', clickEvent => {
   const windowID = BrowserWindow.getFocusedWindow().id;
   let win = new BrowserWindow({ width: 400, height: 400, show: false });
   win.loadURL(url.format({
@@ -15,7 +15,7 @@ genMapBtn.addEventListener('click', function (clickEvent) {
     slashes: true
   }));
 
-  win.webContents.on('did-finish-load', function () {
+  win.webContents.on('did-finish-load', () => {
     const seed = 1442796044743;
     //const seed = Date.now();
     const options = {seed: seed, w: 64, h: Math.abs(64 - 9)};
@@ -23,11 +23,11 @@ genMapBtn.addEventListener('click', function (clickEvent) {
   });
 });
 
-ipcRenderer.on('map-generated', function (event, options, map) {
+ipcRenderer.on('map-generated', (event, options, map) => {
   console.log(`A map with width: ${options.w}, height: ${options.h} and seed: ${options.seed} was generated`);
 
   // Initialize canvas elements
-  Game.initCanvas();
+  Game.initCanvas(options.w, options.h);
 
   // Create treasure chests
   Game.generateTreasures(map.cells, map.floorCells);

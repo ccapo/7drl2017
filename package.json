@@ -1,22 +1,20 @@
 {
-  "name": "7drl2017",
-  "version": "0.1.0",
+  "name": "EscapeCraft",
   "description": "EscapeCraft",
-  "main": "main.js",
-  "scripts": {
-    "start": "electron ."
-  },
-  "repository": "https://github.com/ccapo/7drl2017",
+  "version": "0.1.0",
+  "author": "Chris Capobianco",
+  "license": "MIT",
   "keywords": [
     "Electron",
     "roguelike"
   ],
-  "author": "Chris Capobianco",
-  "license": "MIT",
-  "devDependencies": {
-    "electron": "^1.4.1"
-  },
+  "main": "main.js",
+  "repository": "https://github.com/ccapo/7drl2017",
   "dependencies": {
+    "electron": "^1.4.1",
     "rot-js": "git+https://github.com/ccapo/rot.js.git#npm-deploy"
+  },
+    "scripts": {
+    "start": "electron ."
   }
 }

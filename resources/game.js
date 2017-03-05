@@ -4,9 +4,10 @@ module.exports = {
   display: null,
   log: null,
   status: null,
+  statusHeight: 1,
   logHeight: 8,
-  width: 64,
-  height: 64 - 9,
+  width: null,
+  height: null,
   fontSize: 12,
   cells: [],
   symType: Object.freeze({FLOOR: 0, WALL: 1, ITEM: 2}),
@@ -16,26 +17,28 @@ module.exports = {
   treasure: null,
  
   // Game initialization
-  initCanvas: function() {
+  initCanvas: function(w, h) {
     let canvases = document.getElementsByTagName('canvas');
     if(canvases.length === 0) {
-      let options = {
-        width: this.width,
-        height: this.height,
+      let displayOptions = {
+        width: w,
+        height: h,
         fontSize: this.fontSize,
         forceSquareRatio: true
-      }
+      };
 
-      options.height = 1;
-      this.status = new ROT.Display(options);
+      this.width = w;
+      this.height = h;
+
+      let statusOptions = Object.assign({}, displayOptions, {height: 1});
+      this.status = new ROT.Display(statusOptions);
       document.getElementById('game').appendChild(this.status.getContainer());
 
-      options.height = this.height;
-      this.display = new ROT.Display(options);
+      this.display = new ROT.Display(displayOptions);
       document.getElementById('game').appendChild(this.display.getContainer());
 
-      options.height = this.logHeight;
-      this.log = new ROT.Display(options);
+      let logOptions = Object.assign({}, displayOptions, {height: this.logHeight});
+      this.log = new ROT.Display(logOptions);
       this.log.messages = [];
       document.getElementById('game').appendChild(this.log.getContainer());
     } else {
