@@ -23,24 +23,7 @@ function generateMap(windowId) {
 ipcRenderer.on('new-game', (event, windowId) => {
   console.log('Generating Map ...');
 
-  // Remove canvas elements
-  let parent = document.getElementById("game");
-  let canvases = document.getElementsByTagName('canvas');
-  for (let canvas of canvases) {
-    parent.removeChild(canvas);
-  }
-  canvases = document.getElementsByTagName('canvas');
-  for (let canvas of canvases) {
-    parent.removeChild(canvas);
-  }
-
   Game.cleanUp();
-
-  // Add throbber and message
-  let element = document.getElementById("loader");
-  element.classList.add("pong-loader");
-  element = document.getElementById('game');
-  element.innerHTML = 'Generating Map...';
 
   generateMap(windowId);
 });
@@ -68,5 +51,5 @@ ipcRenderer.on('map-generated', (event, options, map) => {
   Game.creature = Game.createEntity(Game.Creature, map.floorCells);
 
   // Initialize game
-  Game.init(map.cells);
+  Game.init(map.cells, map.floorCells);
 });

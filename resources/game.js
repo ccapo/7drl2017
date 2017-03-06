@@ -1,25 +1,52 @@
 const ROT = require('rot-js');
 
 module.exports = {
+  // Canvas containers
   display: null,
   log: null,
   status: null,
+  inventory: null,
+  crucible: null,
+
+  // Constants
   statusHeight: 1,
   logHeight: 8,
-  width: null,
-  height: null,
   fontSize: 12,
   fontFamily: 'helvetica',
-  cells: [],
   symType: Object.freeze({FLOOR: 0, WALL: 1, ITEM: 2}),
+
+  // Global variables
+  width: null,
+  height: null,
+  cells: [],
+  floorCells: [],
   engine: null,
   player: null,
   creature: null,
   item: null,
+  exit: null,
   scheduler: null,
 
   // Clean up game state
   cleanUp: function() {
+    // Remove canvas elements
+    let canvases = document.getElementsByTagName('canvas');
+    for (let canvas of canvases) {
+      let parent = document.getElementById("game");
+      if (canvas.parentNode.id === "menu") {
+        parent = document.getElementById("menu");
+      }
+      parent.removeChild(canvas);
+    }
+    canvases = document.getElementsByTagName('canvas');
+    for (let canvas of canvases) {
+      let parent = document.getElementById("game");
+      if (canvas.parentNode.id === "menu") {
+        parent = document.getElementById("menu");
+      }
+      parent.removeChild(canvas);
+    }
+
     if (this.scheduler) {
       this.scheduler.clear();
     }
@@ -33,6 +60,12 @@ module.exports = {
       this.log.messages = [];
       this.log.clear();
     }
+    if (this.inventory) {
+      this.inventory.clear();
+    }
+    if (this.crucible) {
+      this.crucible.clear();
+    }
     if (this.player) {
       this.player = null;
     }
@@ -45,6 +78,15 @@ module.exports = {
     if (this.cells) {
       this.cells = [];
     }
+    if (this.floorCells) {
+      this.floorCells = [];
+    }
+
+    // Add throbber and message
+    let element = document.getElementById("loader");
+    element.classList.add("pong-loader");
+    element = document.getElementById('game');
+    element.innerHTML = 'Generating Map...';
   },
  
   // Game initialization
@@ -63,6 +105,7 @@ module.exports = {
       this.width = w;
       this.height = h;
 
+      // Player Stats, Game Display and Message Log
       let statusOptions = Object.assign({}, displayOptions, {height: 1});
       this.status = new ROT.Display(statusOptions);
       document.getElementById('game').appendChild(this.status.getContainer());
@@ -74,18 +117,30 @@ module.exports = {
       this.log = new ROT.Display(logOptions);
       this.log.messages = [];
       document.getElementById('game').appendChild(this.log.getContainer());
+
+      // Inventory and Crucible menus
+      let inventoryOptions = Object.assign({}, displayOptions, {width: 22, height: 42});
+      this.inventory = new ROT.Display(inventoryOptions);
+      document.getElementById('menu').appendChild(this.inventory.getContainer());
+
+      let crucibleOptions = Object.assign({}, displayOptions, {width: 22, height: 22});
+      this.crucible = new ROT.Display(crucibleOptions);
+      document.getElementById('menu').appendChild(this.crucible.getContainer());
     } else {
       this.scheduler.clear();
       this.status.clear();
       this.display.clear();
       this.log.messages = [];
       this.log.clear();
+      this.inventory.clear();
+      this.crucible.clear();
     }
   },
 
   // Game initialization
-  init: function(cells) {
+  init: function(cells, floorCells) {
     this.cells = cells;
+    this.floorCells = floorCells;
 
     scheduler = new ROT.Scheduler.Speed();
     scheduler.add(this.player, true);
@@ -155,7 +210,7 @@ module.exports = {
   // Generate Items
   generateItems: function(cells, floorCells) {
     let items = [];
-    for(let i = 0; i < 1; i++) {
+    for(let i = 0; i < 3; i++) {
       let index = Math.floor(ROT.RNG.getUniform() * floorCells.length);
       let key = floorCells.splice(index, 1)[0];
       cells[key] = module.exports.symType.ITEM;

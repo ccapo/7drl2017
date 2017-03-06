@@ -5,16 +5,36 @@
     <title>EscapeCraft: Craft your Escape</title>
     <link rel="stylesheet" href="pong.css">
     <style>
+      * {
+        box-sizing: border-box;
+      }
       body {
         text-align: center;
+        margin: 0;
+      }
+      .column {
+        float: left;
+        padding: 15px;
+      }
+      .clearfix::after {
+          content: "";
+          clear: both;
+          display: table;
+      }
+      .sidemenu {
+          width: 25%;
+      }
+      .content {
+          width: 75%;
       }
     </style>
   </head>
   <body>
-    <div style="position: relative">
+    <div style="position: relative" class="clearfix">
       <div>EscapeCraft: Craft your Escape</div>
       <div id="loader" class="pong-loader"></div>
-      <div id="game">Generating Map...</div>
+      <div id="menu" class="column sidemenu"></div>
+      <div id="game" class="column content">Generating Map...</div>
     </div>
   </body>
 
