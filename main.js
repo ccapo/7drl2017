@@ -14,7 +14,7 @@ const url = require('url');
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
 
-function createWindow () {
+function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({width: 785, height: 820});
 
@@ -27,6 +27,11 @@ function createWindow () {
 
   // Open the DevTools.
   //mainWindow.webContents.openDevTools()
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    // Create a new game
+    mainWindow.webContents.send('new-game', 1);
+  })
 
   // Emitted when the window is closed.
   mainWindow.on('closed', () => {
@@ -59,6 +64,12 @@ app.on('activate', () => {
   }
 });
 
+function newGameCallback(response) {
+  if (response === 0) {
+    mainWindow.webContents.send('new-game', 1);
+  }
+}
+
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
 const template = [
@@ -69,14 +80,13 @@ const template = [
         label: 'New Game',
         accelerator: 'Ctrl+N',
         click() {
-          console.log('New Game');
           const options = {
             type: 'info',
             title: 'New Game',
-            message: "This is an information dialog. Isn't it nice?",
-            buttons: ['Yes', 'No']
+            message: "Would you like to start a New Game?",
+            buttons: ['OK', 'Cancel']
           };
-          dialog.showMessageBox(options);
+          dialog.showMessageBox(options, newGameCallback);
         }
       },
       {
@@ -142,11 +152,10 @@ const template = [
       {
         label: 'About EscapeCraft',
         click() {
-          console.log('About EscapeCraft');
           const options = {
             type: 'info',
             title: 'About EscapeCraft',
-            message: "EscapeCraft is a roguelike game, written in 7 days.",
+            message: "The goal is to survive and escape by crafting weapons and tools\n\nCreated for the 2017 7DRL Challenge\n\nWritten by Chris Capobianco",
             buttons: ['OK']
           };
           dialog.showMessageBox(options);

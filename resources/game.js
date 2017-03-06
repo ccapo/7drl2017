@@ -9,12 +9,43 @@ module.exports = {
   width: null,
   height: null,
   fontSize: 12,
+  fontFamily: 'helvetica',
   cells: [],
   symType: Object.freeze({FLOOR: 0, WALL: 1, ITEM: 2}),
   engine: null,
   player: null,
   creature: null,
-  treasure: null,
+  item: null,
+  scheduler: null,
+
+  // Clean up game state
+  cleanUp: function() {
+    if (this.scheduler) {
+      this.scheduler.clear();
+    }
+    if (this.status) {
+      this.status.clear();
+    }
+    if (this.display) {
+      this.display.clear();
+    }
+    if (this.log) {
+      this.log.messages = [];
+      this.log.clear();
+    }
+    if (this.player) {
+      this.player = null;
+    }
+    if (this.creature) {
+      this.create = null;
+    }
+    if (this.item) {
+      this.item = null;
+    }
+    if (this.cells) {
+      this.cells = [];
+    }
+  },
  
   // Game initialization
   initCanvas: function(w, h) {
@@ -24,6 +55,8 @@ module.exports = {
         width: w,
         height: h,
         fontSize: this.fontSize,
+        fontFamily: this.fontFamily,
+        fontStyle: 'bold',
         forceSquareRatio: true
       };
 
@@ -42,6 +75,7 @@ module.exports = {
       this.log.messages = [];
       document.getElementById('game').appendChild(this.log.getContainer());
     } else {
+      this.scheduler.clear();
       this.status.clear();
       this.display.clear();
       this.log.messages = [];
@@ -53,7 +87,7 @@ module.exports = {
   init: function(cells) {
     this.cells = cells;
 
-    let scheduler = new ROT.Scheduler.Speed();
+    scheduler = new ROT.Scheduler.Speed();
     scheduler.add(this.player, true);
     scheduler.add(this.creature, true);
 
@@ -75,12 +109,12 @@ module.exports = {
 
     // Create border for left and right of message log
     for(let y = 1; y < this.logHeight - 1; y++) {
-      this.log.drawText(0, y, "/");
-      this.log.drawText(this.width - 1, y, "\\");
+      this.log.drawText(0, y, "|");
+      this.log.drawText(this.width - 1, y, "|");
     }
 
     // Title for message log
-    this.log.drawText(2, 0, "Activity Log");
+    this.log.drawText(2, 0, "Message Log");
   },
 
   // Write to the message log
@@ -118,19 +152,19 @@ module.exports = {
     this.status.drawText(1, 0, statusStr);
   },
 
-  // Generate treasures
-  generateTreasures: function(cells, floorCells) {
-    let chests = [];
+  // Generate Items
+  generateItems: function(cells, floorCells) {
+    let items = [];
     for(let i = 0; i < 1; i++) {
       let index = Math.floor(ROT.RNG.getUniform() * floorCells.length);
       let key = floorCells.splice(index, 1)[0];
       cells[key] = module.exports.symType.ITEM;
-      chests.push(key);
+      items.push(key);
     }
-    // Put the treasure in a random chest
-    let index = Math.floor(ROT.RNG.getUniform() * chests.length);
-    let randomKey = chests[index];
-    this.treasure = randomKey;
+    // Pick the special item
+    let index = Math.floor(ROT.RNG.getUniform() * items.length);
+    let randomKey = items[index];
+    this.item = randomKey;
   },
 
   // Create entity
@@ -156,7 +190,7 @@ module.exports = {
       } break;
 
       case module.exports.symType.ITEM: {
-        this.display.draw(x, y, "[]", "#996633");
+        this.display.draw(x, y, "!", "#FF00FF");
       } break;
 
       default: {
@@ -240,18 +274,18 @@ module.exports.Player.prototype = {
   checkItem: function() {
     let key = this.px + this.py*module.exports.width;
     if(module.exports.cells[key] === module.exports.symType.ITEM) {
-      if(key === module.exports.treasure) {
-        module.exports.logWrite("Congratulations, you found the treasure!");
-        module.exports.logWrite("Click 'New Game' to play again");
+      if(key === module.exports.item) {
+        module.exports.logWrite("Congratulations, you found the special item!");
+        module.exports.logWrite("Select 'New Game' from the File menu to play again");
         module.exports.engine.lock();
         window.removeEventListener("keydown", this);
       } else {
-        module.exports.logWrite("This box is empty");
+        module.exports.logWrite("This isn't the special item");
       }
     }
   },
 
-  handleEvent: function(e) {
+  handleEvent: function(event) {
     let keyMap = {};
     keyMap[38] = 0;
     keyMap[33] = 1;
@@ -262,7 +296,7 @@ module.exports.Player.prototype = {
     keyMap[37] = 6;
     keyMap[36] = 7;
 
-    let code = e.keyCode;
+    let code = event.keyCode;
     if(code === 13 || code === 32) {
       this.checkItem();
       return;
@@ -316,9 +350,9 @@ module.exports.Creature.prototype = {
     }
     astar.compute(this.cx, this.cy, pathCallback);
 
-    path.shift(); // Remove the Minotaur's position
+    path.shift(); // Remove the creatures position
     if (path.length === 1) {
-      alert("Game Over. You were captured by the Minotaur!");
+      alert("Game Over. You were captured by the Creature!");
       module.exports.logWrite("You lost, better luck next time.");
       module.exports.engine.lock();
     } else {

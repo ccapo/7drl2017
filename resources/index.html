@@ -3,12 +3,19 @@
   <head>
     <meta charset="UTF-8">
     <title>EscapeCraft: Craft your Escape</title>
+    <link rel="stylesheet" href="pong.css">
+    <style>
+      body {
+        text-align: center;
+      }
+    </style>
   </head>
   <body>
     <div style="position: relative">
-      <div style="text-align: center">EscapeCraft: Craft your Escape</div><button style="position: absolute; right: 0; top: -3px" id="gen-map-btn">New Game</button>
+      <div>EscapeCraft: Craft your Escape</div>
+      <div id="loader" class="pong-loader"></div>
+      <div id="game">Generating Map...</div>
     </div>
-    <div id="game"></div>
   </body>
 
   <script>
