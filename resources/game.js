@@ -11,6 +11,9 @@ module.exports = {
   // Constants
   statusHeight: 1,
   logHeight: 8,
+  menuWidth: 22,
+  invHeight: 42,
+  cruHeight: 22,
   fontSize: 12,
   fontFamily: 'helvetica',
   symType: Object.freeze({FLOOR: 0, WALL: 1, ITEM: 2}),
@@ -119,11 +122,11 @@ module.exports = {
       document.getElementById('game').appendChild(this.log.getContainer());
 
       // Inventory and Crucible menus
-      let inventoryOptions = Object.assign({}, displayOptions, {width: 22, height: 42});
+      let inventoryOptions = Object.assign({}, displayOptions, {width: this.menuWidth, height: this.invHeight});
       this.inventory = new ROT.Display(inventoryOptions);
       document.getElementById('menu').appendChild(this.inventory.getContainer());
 
-      let crucibleOptions = Object.assign({}, displayOptions, {width: 22, height: 22});
+      let crucibleOptions = Object.assign({}, displayOptions, {width: this.menuWidth, height: this.cruHeight});
       this.crucible = new ROT.Display(crucibleOptions);
       document.getElementById('menu').appendChild(this.crucible.getContainer());
     } else {
@@ -149,17 +152,17 @@ module.exports = {
     this.engine = new ROT.Engine(scheduler);
     this.engine.start();
 
-    this.initLog();
+    this.initPanels();
 
     this.statusWrite(this.player);
   },
 
-  // Initialize log message
-  initLog: function() {
+  // Initialize the message log, inventory and crucible panels
+  initPanels: function() {
     // Create border for top and bottom of message log
     for(let x = 0; x < this.width; x++) {
-      this.log.drawText(x, 0, "=");
-      this.log.drawText(x, this.logHeight - 1, "=");
+      this.log.drawText(x, 0, "~");
+      this.log.drawText(x, this.logHeight - 1, "~");
     }
 
     // Create border for left and right of message log
@@ -170,6 +173,36 @@ module.exports = {
 
     // Title for message log
     this.log.drawText(2, 0, "Message Log");
+    
+    // Create border for top and bottom of inventory panel
+    for(let x = 0; x < this.menuWidth; x++) {
+      this.inventory.drawText(x, 0, "~");
+      this.inventory.drawText(x, this.invHeight - 1, "~");
+    }
+
+    // Create border for left and right of inventory panel
+    for(let y = 1; y < this.invHeight - 1; y++) {
+      this.inventory.drawText(0, y, "|");
+      this.inventory.drawText(this.menuWidth - 1, y, "|");
+    }
+
+    // Title for inventory panel
+    this.inventory.drawText(2, 0, "Inventory");
+    
+    // Create border for top and bottom of crucible panel
+    for(let x = 0; x < this.menuWidth; x++) {
+      this.crucible.drawText(x, 0, "~");
+      this.crucible.drawText(x, this.cruHeight - 1, "~");
+    }
+
+    // Create border for left and right of crucible panel
+    for(let y = 1; y < this.cruHeight - 1; y++) {
+      this.crucible.drawText(0, y, "|");
+      this.crucible.drawText(this.menuWidth - 1, y, "|");
+    }
+
+    // Title for crucible panel
+    this.crucible.drawText(2, 0, "Crucible");
   },
 
   // Write to the message log
