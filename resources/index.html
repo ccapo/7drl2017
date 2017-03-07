@@ -5,44 +5,22 @@
     <title>EscapeCraft: Craft your Escape</title>
     <link rel='stylesheet' href='main.css'>
     <link rel='stylesheet' href='pong.css'>
-    <style>
-      ul {
-        text-align: left
-      }
-      li {
-        list-style-type: none;
-      }
-      .selected {
-        background-color: darkblue;
-        width: 6em;
-      }
-    </style>
   </head>
   <body>
     <div class='header'>
       <div>EscapeCraft: Craft your Escape</div>
-      <span id='loading-animation' class='pong-loader'></span>
-      <div id='loading-message'>Generating Map&#8230;</div>
     </div>
     <div class='clearfix'>
       <div id='menu' class='column sidemenu'>
-        <!--<ul>
-          <li id='li1'>Stick</li>
-          <li id='li2'>Stone</li>
-          <li id='li3'>Vine</li>
-        </ul>-->
+        <div>Inventory => <button id='craft'>Craft</button></div>
+        <ul id='inventory'></ul>
       </div>
-      <div id='game' class='column content'></div>
+      <div id='game' class='column content'>
+        <span id='loading-animation' class='pong-loader'></span>
+        <div id='loading-message'>Generating Map&#8230;</div>
+      </div>
     </div>
   </body>
-  <script>
-    let element = document.getElementById('li1');
-    element.onclick = () => {element.classList.toggle('selected')};
-    element = document.getElementById('li2');
-    element.onclick = () => {element.classList.toggle('selected')};
-    element = document.getElementById('li3');
-    element.onclick = () => {element.classList.toggle('selected')};
-  </script>
   <script>
     require('./renderer');
   </script>

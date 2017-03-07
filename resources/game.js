@@ -5,15 +5,10 @@ module.exports = {
   display: null,
   log: null,
   status: null,
-  inventory: null,
-  crucible: null,
 
   // Constants
   statusHeight: 1,
   logHeight: 8,
-  menuWidth: 22,
-  invHeight: 42,
-  cruHeight: 22,
   fontSize: 12,
   fontFamily: 'helvetica',
   symType: Object.freeze({FLOOR: 0, WALL: 1, ITEM: 2}),
@@ -29,25 +24,25 @@ module.exports = {
   item: null,
   exit: null,
   scheduler: null,
+  itemDictionary: {},
+  inventory: [],
+  gameElement: null,
+  inventoryElement: null,
+  loadingAnimation: null,
+  loadingMessage: null,
+  craftBtn: null,
 
   // Clean up game state
   cleanUp: function() {
     // Remove canvas elements
+    this.gameElement = document.getElementById('game');
     let canvases = document.getElementsByTagName('canvas');
     for (let canvas of canvases) {
-      let parent = document.getElementById('game');
-      if (canvas.parentNode.id === 'menu') {
-        parent = document.getElementById('menu');
-      }
-      parent.removeChild(canvas);
+      this.gameElement.removeChild(canvas);
     }
     canvases = document.getElementsByTagName('canvas');
     for (let canvas of canvases) {
-      let parent = document.getElementById('game');
-      if (canvas.parentNode.id === 'menu') {
-        parent = document.getElementById('menu');
-      }
-      parent.removeChild(canvas);
+      this.gameElement.removeChild(canvas);
     }
 
     if (this.scheduler) {
@@ -62,12 +57,6 @@ module.exports = {
     if (this.log) {
       this.log.messages = [];
       this.log.clear();
-    }
-    if (this.inventory) {
-      this.inventory.clear();
-    }
-    if (this.crucible) {
-      this.crucible.clear();
     }
     if (this.player) {
       this.player = null;
@@ -84,12 +73,27 @@ module.exports = {
     if (this.floorCells) {
       this.floorCells = [];
     }
+    if (this.inventory) {
+      this.inventory = [
+        this.itemDictionary['1'],
+        this.itemDictionary['2'],
+        this.itemDictionary['3']
+      ];
+    }
 
     // Add loader animation and message
-    let element = document.getElementById('loading-animation');
-    element.classList.add('pong-loader');
-    element = document.getElementById('loading-message');
-    element.innerHTML = 'Generating Map&#8230;';
+    this.loadingAnimation = document.getElementById('loading-animation');
+    this.loadingAnimation.classList.add('pong-loader');
+    this.loadingMessage = document.getElementById('loading-message');
+    this.loadingMessage.innerHTML = 'Generating Map&#8230;';
+
+    this.inventoryElement = document.getElementById('inventory');
+    this.craftBtn = document.getElementById('craft');
+
+    // Remove all items from inventory
+    while (this.inventoryElement.firstChild) {
+      this.inventoryElement.removeChild(this.inventoryElement.firstChild);
+    }
   },
  
   // Game initialization
@@ -120,15 +124,6 @@ module.exports = {
       this.log = new ROT.Display(logOptions);
       this.log.messages = [];
       document.getElementById('game').appendChild(this.log.getContainer());
-
-      // Inventory and Crucible menus
-      let inventoryOptions = Object.assign({}, displayOptions, {width: this.menuWidth, height: this.invHeight});
-      this.inventory = new ROT.Display(inventoryOptions);
-      document.getElementById('menu').appendChild(this.inventory.getContainer());
-
-      let crucibleOptions = Object.assign({}, displayOptions, {width: this.menuWidth, height: this.cruHeight});
-      this.crucible = new ROT.Display(crucibleOptions);
-      document.getElementById('menu').appendChild(this.crucible.getContainer());
     } else {
       if (this.scheduler) {
         this.scheduler.clear();
@@ -142,12 +137,6 @@ module.exports = {
       if (this.log) {
         this.log.messages = [];
         this.log.clear();
-      }
-      if (this.inventory) {
-        this.inventory.clear();
-      }
-      if (this.crucible) {
-        this.crucible.clear();
       }
       if (this.player) {
         this.player = null;
@@ -164,6 +153,13 @@ module.exports = {
       if (this.floorCells) {
         this.floorCells = [];
       }
+      if (this.inventory) {
+        this.inventory = [
+          this.itemDictionary['1'],
+          this.itemDictionary['2'],
+          this.itemDictionary['3']
+        ];
+      }
     }
   },
 
@@ -172,24 +168,106 @@ module.exports = {
     this.cells = cells;
     this.floorCells = floorCells;
 
-    scheduler = new ROT.Scheduler.Speed();
-    scheduler.add(this.player, true);
-    scheduler.add(this.creature, true);
+    this.scheduler = new ROT.Scheduler.Speed();
+    this.scheduler.add(this.player, true);
+    this.scheduler.add(this.creature, true);
 
-    this.engine = new ROT.Engine(scheduler);
+    this.engine = new ROT.Engine(this.scheduler);
     this.engine.start();
 
     this.initPanels();
 
     this.statusWrite(this.player);
+
+    this.itemDictionary['1'] = {id: 1, name: 'Fire', consumables: []};
+    this.itemDictionary['2'] = {id: 2, name: 'Earth', consumables: []};
+    this.itemDictionary['3'] = {id: 3, name: 'Water', consumables: []};
+    this.itemDictionary['4'] = {id: 4, name: 'Stone', consumables: []};
+    this.itemDictionary['5'] = {id: 5, name: 'Stick', consumables: []};
+    this.itemDictionary['6'] = {id: 6, name: 'Vines', consumables: []};
+    this.itemDictionary['7'] = {id: 7, name: 'Metal', consumables: []};
+    this.itemDictionary['8'] = {id: 8, name: 'Dead Animal', consumables: []};
+
+    // Second order items
+    this.itemDictionary['1+2'] = {id: 9, name: 'Sulphur', consumables: [2]};
+    this.itemDictionary['1+3'] = {id: 10, name: 'Salt', consumables: [3]};
+    this.itemDictionary['2+3'] = {id: 11, name: 'Mud', consumables: [2]};
+    this.itemDictionary['1+5'] = {id: 12, name: 'Charcoal', consumables: [5]};
+    this.itemDictionary['4+4'] = {id: 13, name: 'Sharpened Stone', consumables: [4, 4]};
+    this.itemDictionary['6+6'] = {id: 14, name: 'Vine Rope', consumables: [6, 6]};
+    this.itemDictionary['5+6'] = {id: 15, name: 'Unlit Torch', consumables: [5, 6]};
+    this.itemDictionary['4+5'] = {id: 16, name: 'Club', consumables: [4, 5]};
+
+    // Third order items
+    this.itemDictionary['1+11'] = {id: 17, name: 'Mud Brick', consumables: [11]};
+    this.itemDictionary['8+13'] = {id: 18, name: 'Animal Hide', consumables: [8]};
+    this.itemDictionary['5+13'] = {id: 19, name: 'Sharpened Stick', consumables: [5]};
+    this.itemDictionary['7+13'] = {id: 20, name: 'Sharpened Metal', consumables: [7]};
+    this.itemDictionary['4+14'] = {id: 21, name: 'Bolas', consumables: [4, 14]};
+    this.itemDictionary['1+15'] = {id: 22, name: 'Lit Torch', consumables: [15]};
+
+    // Fourth order items
+    this.itemDictionary['17+17'] = {id: 23, name: 'Brick Wall', consumables: [17, 17]};
+    this.itemDictionary['5+20'] = {id: 24, name: 'Axe', consumables: [5, 20]};
+
+    // Special items
+    this.itemDictionary['9+10+12'] = {id: 25, name: 'Black Powder', consumables: [9, 10, 12]};
+    this.itemDictionary['1+3+20'] = {id: 26, name: 'Tempered Blade', consumables: [20]};
+    this.itemDictionary['1+13+18'] = {id: 27, name: 'Leather Armour', consumables: [13, 18]};
+
+    // Setup basic inventory
+    this.inventory = [
+      this.itemDictionary['1'],
+      this.itemDictionary['2'],
+      this.itemDictionary['3']
+    ];
+
+    // Add inventory to menu
+    for (let item of this.inventory) {
+      let newInventory = document.createElement("LI");
+      let textNode = document.createTextNode(item.name);
+      newInventory.appendChild(textNode);
+      newInventory.dataset.id = item.id;
+      newInventory.onclick = () => {newInventory.classList.toggle('selected')};
+      this.inventoryElement.appendChild(newInventory);
+    }
+
+    // Add on click listeners for current inventory items
+    //let elements = document.getElementsByTagName('li');
+    //for(let element of elements) {
+    //  element.onclick = () => {element.classList.toggle('selected')};
+    //}
+
+    // Add on click listener for craft button
+    this.craftBtn.onclick = () => {
+      let selectedItems = document.querySelectorAll(".selected");
+      if (selectedItems.length >= 2) {
+        let itemsArray = [];
+        for (let item of selectedItems) {
+          itemsArray.push(parseInt(item.dataset.id));
+          item.classList.remove('selected');
+        }
+        let newItem = this.craftItem(itemsArray);
+        if (newItem) {
+          let newInventory = document.createElement("LI");
+          let textNode = document.createTextNode(newItem.name);
+          newInventory.appendChild(textNode);
+          newInventory.dataset.id = newItem.id;
+          newInventory.onclick = () => {newInventory.classList.toggle('selected')};
+          this.inventoryElement.appendChild(newInventory);
+        }
+      } else {
+        alert('Please select two or more items to craft');
+      }
+    };
   },
 
   // Initialize the message log, inventory and crucible panels
   initPanels: function() {
     // Create border for top and bottom of message log
     for(let x = 0; x < this.width; x++) {
-      this.log.drawText(x, 0, '~');
-      this.log.drawText(x, this.logHeight - 1, '~');
+      this.log.drawText(x, 0, '-');
+      this.log.drawText(x, this.logHeight - 1, '-');
     }
 
     // Create border for left and right of message log
@@ -200,36 +278,6 @@ module.exports = {
 
     // Title for message log
     this.log.drawText(2, 0, 'Message Log');
-    
-    // Create border for top and bottom of inventory panel
-    for(let x = 0; x < this.menuWidth; x++) {
-      this.inventory.drawText(x, 0, '~');
-      this.inventory.drawText(x, this.invHeight - 1, '~');
-    }
-
-    // Create border for left and right of inventory panel
-    for(let y = 1; y < this.invHeight - 1; y++) {
-      this.inventory.drawText(0, y, '|');
-      this.inventory.drawText(this.menuWidth - 1, y, '|');
-    }
-
-    // Title for inventory panel
-    this.inventory.drawText(2, 0, 'Inventory');
-    
-    // Create border for top and bottom of crucible panel
-    for(let x = 0; x < this.menuWidth; x++) {
-      this.crucible.drawText(x, 0, '~');
-      this.crucible.drawText(x, this.cruHeight - 1, '~');
-    }
-
-    // Create border for left and right of crucible panel
-    for(let y = 1; y < this.cruHeight - 1; y++) {
-      this.crucible.drawText(0, y, '|');
-      this.crucible.drawText(this.menuWidth - 1, y, '|');
-    }
-
-    // Title for crucible panel
-    this.crucible.drawText(2, 0, 'Crucible');
   },
 
   // Write to the message log
@@ -365,6 +413,50 @@ module.exports = {
     this.cx = x;
     this.cy = y;
     this.draw();
+  },
+
+  // Craft item function
+  craftItem: function(items) {
+    // Check that items is an array
+    if (!Array.isArray(items)) {
+      throw new Error('craftItems: Items needs to be an array');
+    }
+
+    // Check that items array has multiple entries
+    if (items.length <= 1) {
+      throw new Error('craftItems: Items array must contain two or more items');
+    }
+
+    // Sort items array
+    items.sort((a, b) => {
+      return a - b;
+    });
+
+    // Construct crafted item key
+    let key = '';
+    for(const item of items) {
+      key += `${item.toString()}+`;
+    }
+    key = key.substr(0, key.length - 1);
+
+    // Check if crafted key exists, and assign to newItem
+    let newItem = null;
+    if(this.itemDictionary.hasOwnProperty(key) === true) {
+      newItem = this.itemDictionary[key];
+      for(const consume of newItem.consumables) {
+        let index = items.indexOf(consume);
+        if(index > -1) {
+          items.splice(index, 1);
+        }
+      }
+      console.log(`You Crafted ${newItem.name}!`);
+      this.logWrite(`You Crafted ${newItem.name}!`);
+    } else {
+      console.log(`Hmm ... that didn't work`);
+      this.logWrite(`Hmm ... that didn't work`);
+    }
+
+    return newItem;
   }
 };
 
@@ -391,11 +483,12 @@ module.exports.Player.prototype = {
     if(module.exports.cells[key] === module.exports.symType.ITEM) {
       if(key === module.exports.item) {
         module.exports.logWrite('Congratulations, you found the special item!');
-        module.exports.logWrite('To Play Again Select New Game from the File Menu');
+        module.exports.logWrite('To Play Again Select New Game from the File/Application Menu');
         module.exports.engine.lock();
         window.removeEventListener('keydown', this);
       } else {
         module.exports.logWrite('This is not the special item');
+
       }
     }
   },

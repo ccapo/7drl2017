@@ -78,7 +78,7 @@ const template = [
     submenu: [
       {
         label: 'New Game',
-        accelerator: 'Ctrl+N',
+        accelerator: 'CmdOrCtrl+N',
         click() {
           const options = {
             type: 'info',
@@ -150,12 +150,24 @@ const template = [
     role: 'help',
     submenu: [
       {
-        label: 'About EscapeCraft',
+        label: 'About',
         click() {
           const options = {
             type: 'info',
             title: 'About EscapeCraft',
-            message: 'The goal is to survive and escape by crafting weapons and tools\n\nCreated for the 2017 7DRL Challenge\n\nWritten by Chris Capobianco',
+            message: 'The goal is to survive and escape by crafting weapons/tools\n\nCreated for the 2017 7DRL Challenge\n\nWritten by Chris Capobianco',
+            buttons: ['OK']
+          };
+          dialog.showMessageBox(options);
+        }
+      },
+      {
+        label: 'Controls',
+        click() {
+          const options = {
+            type: 'info',
+            title: 'Controls',
+            message: 'The player can move using either the arrow/WASD keys\n\nThe Enter key is the action key\n\nInteract with the inventory using the mouse',
             buttons: ['OK']
           };
           dialog.showMessageBox(options);
@@ -170,14 +182,28 @@ if (process.platform === 'darwin') {
     label: app.getName(),
     submenu: [
       {
-        role: 'about'
+        role: 'about',
       },
       {
         type: 'separator'
       },
       {
         role: 'services',
-        submenu: []
+        submenu: [
+          {
+            label: 'New Game',
+            accelerator: 'CmdOrCtrl+N',
+            click() {
+              const options = {
+                type: 'info',
+                title: 'New Game',
+                message: 'Would you like to start a New Game?',
+                buttons: ['OK', 'Cancel']
+              };
+              dialog.showMessageBox(options, newGameCallback);
+            }
+          }
+        ]
       },
       {
         type: 'separator'

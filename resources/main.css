@@ -23,9 +23,26 @@ body {
 }
 
 .sidemenu {
+  margin-top: 33px;
   width: 25%;
+  min-height: 757px;
+  border: #777777;
+  border-style: dashed;
 }
 
 .content {
   width: 75%;
+}
+
+ul {
+  text-align: left
+}
+
+li {
+  list-style-type: circle;
+}
+
+.selected {
+  background-color: darkblue;
+  width: 6em;
 }
