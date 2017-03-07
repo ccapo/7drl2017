@@ -1,11 +1,15 @@
 * {
   box-sizing: border-box;
+  background-color: black;
+  color: white;
 }
 
 body {
   text-align: center;
   margin: 0;
 }
+
+.header {}
 
 .column {
   float: left;

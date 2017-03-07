@@ -83,7 +83,7 @@ const template = [
           const options = {
             type: 'info',
             title: 'New Game',
-            message: "Would you like to start a New Game?",
+            message: 'Would you like to start a New Game?',
             buttons: ['OK', 'Cancel']
           };
           dialog.showMessageBox(options, newGameCallback);
@@ -155,7 +155,7 @@ const template = [
           const options = {
             type: 'info',
             title: 'About EscapeCraft',
-            message: "The goal is to survive and escape by crafting weapons and tools\n\nCreated for the 2017 7DRL Challenge\n\nWritten by Chris Capobianco",
+            message: 'The goal is to survive and escape by crafting weapons and tools\n\nCreated for the 2017 7DRL Challenge\n\nWritten by Chris Capobianco',
             buttons: ['OK']
           };
           dialog.showMessageBox(options);

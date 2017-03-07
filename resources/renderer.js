@@ -31,10 +31,10 @@ ipcRenderer.on('new-game', (event, windowId) => {
 ipcRenderer.on('map-generated', (event, options, map) => {
   console.log(`A map with width: ${options.w}, height: ${options.h} and seed: ${options.seed} was generated`);
 
-  // Remove throbber and message
-  let element = document.getElementById("loader");
-  element.classList.remove("pong-loader");
-  element = document.getElementById('game');
+  // Remove loading animation and message
+  let element = document.getElementById('loading-animation');
+  element.classList.remove('pong-loader');
+  element = document.getElementById('loading-message');
   element.innerHTML = '';
 
   // Initialize canvas elements

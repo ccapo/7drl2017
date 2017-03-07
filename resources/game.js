@@ -35,17 +35,17 @@ module.exports = {
     // Remove canvas elements
     let canvases = document.getElementsByTagName('canvas');
     for (let canvas of canvases) {
-      let parent = document.getElementById("game");
-      if (canvas.parentNode.id === "menu") {
-        parent = document.getElementById("menu");
+      let parent = document.getElementById('game');
+      if (canvas.parentNode.id === 'menu') {
+        parent = document.getElementById('menu');
       }
       parent.removeChild(canvas);
     }
     canvases = document.getElementsByTagName('canvas');
     for (let canvas of canvases) {
-      let parent = document.getElementById("game");
-      if (canvas.parentNode.id === "menu") {
-        parent = document.getElementById("menu");
+      let parent = document.getElementById('game');
+      if (canvas.parentNode.id === 'menu') {
+        parent = document.getElementById('menu');
       }
       parent.removeChild(canvas);
     }
@@ -85,11 +85,11 @@ module.exports = {
       this.floorCells = [];
     }
 
-    // Add throbber and message
-    let element = document.getElementById("loader");
-    element.classList.add("pong-loader");
-    element = document.getElementById('game');
-    element.innerHTML = 'Generating Map...';
+    // Add loader animation and message
+    let element = document.getElementById('loading-animation');
+    element.classList.add('pong-loader');
+    element = document.getElementById('loading-message');
+    element.innerHTML = 'Generating Map&#8230;';
   },
  
   // Game initialization
@@ -130,13 +130,40 @@ module.exports = {
       this.crucible = new ROT.Display(crucibleOptions);
       document.getElementById('menu').appendChild(this.crucible.getContainer());
     } else {
-      this.scheduler.clear();
-      this.status.clear();
-      this.display.clear();
-      this.log.messages = [];
-      this.log.clear();
-      this.inventory.clear();
-      this.crucible.clear();
+      if (this.scheduler) {
+        this.scheduler.clear();
+      }
+      if (this.status) {
+        this.status.clear();
+      }
+      if (this.display) {
+        this.display.clear();
+      }
+      if (this.log) {
+        this.log.messages = [];
+        this.log.clear();
+      }
+      if (this.inventory) {
+        this.inventory.clear();
+      }
+      if (this.crucible) {
+        this.crucible.clear();
+      }
+      if (this.player) {
+        this.player = null;
+      }
+      if (this.creature) {
+        this.create = null;
+      }
+      if (this.item) {
+        this.item = null;
+      }
+      if (this.cells) {
+        this.cells = [];
+      }
+      if (this.floorCells) {
+        this.floorCells = [];
+      }
     }
   },
 
@@ -161,48 +188,48 @@ module.exports = {
   initPanels: function() {
     // Create border for top and bottom of message log
     for(let x = 0; x < this.width; x++) {
-      this.log.drawText(x, 0, "~");
-      this.log.drawText(x, this.logHeight - 1, "~");
+      this.log.drawText(x, 0, '~');
+      this.log.drawText(x, this.logHeight - 1, '~');
     }
 
     // Create border for left and right of message log
     for(let y = 1; y < this.logHeight - 1; y++) {
-      this.log.drawText(0, y, "|");
-      this.log.drawText(this.width - 1, y, "|");
+      this.log.drawText(0, y, '|');
+      this.log.drawText(this.width - 1, y, '|');
     }
 
     // Title for message log
-    this.log.drawText(2, 0, "Message Log");
+    this.log.drawText(2, 0, 'Message Log');
     
     // Create border for top and bottom of inventory panel
     for(let x = 0; x < this.menuWidth; x++) {
-      this.inventory.drawText(x, 0, "~");
-      this.inventory.drawText(x, this.invHeight - 1, "~");
+      this.inventory.drawText(x, 0, '~');
+      this.inventory.drawText(x, this.invHeight - 1, '~');
     }
 
     // Create border for left and right of inventory panel
     for(let y = 1; y < this.invHeight - 1; y++) {
-      this.inventory.drawText(0, y, "|");
-      this.inventory.drawText(this.menuWidth - 1, y, "|");
+      this.inventory.drawText(0, y, '|');
+      this.inventory.drawText(this.menuWidth - 1, y, '|');
     }
 
     // Title for inventory panel
-    this.inventory.drawText(2, 0, "Inventory");
+    this.inventory.drawText(2, 0, 'Inventory');
     
     // Create border for top and bottom of crucible panel
     for(let x = 0; x < this.menuWidth; x++) {
-      this.crucible.drawText(x, 0, "~");
-      this.crucible.drawText(x, this.cruHeight - 1, "~");
+      this.crucible.drawText(x, 0, '~');
+      this.crucible.drawText(x, this.cruHeight - 1, '~');
     }
 
     // Create border for left and right of crucible panel
     for(let y = 1; y < this.cruHeight - 1; y++) {
-      this.crucible.drawText(0, y, "|");
-      this.crucible.drawText(this.menuWidth - 1, y, "|");
+      this.crucible.drawText(0, y, '|');
+      this.crucible.drawText(this.menuWidth - 1, y, '|');
     }
 
     // Title for crucible panel
-    this.crucible.drawText(2, 0, "Crucible");
+    this.crucible.drawText(2, 0, 'Crucible');
   },
 
   // Write to the message log
@@ -218,7 +245,7 @@ module.exports = {
     // Erase old messages
     for(let x = 2; x < this.width - 2; x++) {
       for(let y = 1; y < this.logHeight - 2; y++) {
-        this.log.draw(x, y, " ", "#000000");
+        this.log.draw(x, y, ' ', '#000000');
       }
     }
 
@@ -226,17 +253,17 @@ module.exports = {
     let y = 1, fraction = 0.0;
     for(let i = this.log.messages.length - 1; i >= 0; i--) {
       let colour = ROT.Color.toHex(ROT.Color.interpolate([204, 204, 204], [0, 0, 0], fraction));
-      this.log.drawText(2, y++, "%c{" + colour + "}" + this.log.messages[i]);
+      this.log.drawText(2, y++, '%c{' + colour + '}' + this.log.messages[i]);
       fraction += 0.15
     }
   },
 
   statusWrite: function(data) {
-    let statusStr = "HP: %c{#0f0}" + data.hp + "/" + data.hpmax + "%c{}";
-    statusStr += " STR: %c{#0f0}" + data.str + "%c{}";
-    statusStr += " DEX: %c{#0f0}" + data.dex + "%c{}";
-    statusStr += " CON: %c{#0f0}" + data.con + "%c{}";
-    statusStr += " PTS: %c{#0f0}" + data.pts + "%c{}";
+    let statusStr = 'HP: %c{#0f0}' + data.hp + '/' + data.hpmax + '%c{}';
+    statusStr += ' STR: %c{#0f0}' + data.str + '%c{}';
+    statusStr += ' DEX: %c{#0f0}' + data.dex + '%c{}';
+    statusStr += ' CON: %c{#0f0}' + data.con + '%c{}';
+    statusStr += ' PTS: %c{#0f0}' + data.pts + '%c{}';
     this.status.drawText(1, 0, statusStr);
   },
 
@@ -270,15 +297,15 @@ module.exports = {
     let y = Math.floor(key/this.width);
     switch (value) {
       case module.exports.symType.FLOOR: {
-        this.display.draw(x, y, " ", "#000000");
+        this.display.draw(x, y, ' ', '#000000');
       } break;
 
       case module.exports.symType.WALL: {
-        this.display.draw(x, y, "#", "#777777");
+        this.display.draw(x, y, '#', '#777777');
       } break;
 
       case module.exports.symType.ITEM: {
-        this.display.draw(x, y, "!", "#FF00FF");
+        this.display.draw(x, y, '!', '#FF00FF');
       } break;
 
       default: {
@@ -356,19 +383,19 @@ module.exports.Player.prototype = {
 
   act: function() {
     module.exports.engine.lock();
-    window.addEventListener("keydown", this);
+    window.addEventListener('keydown', this);
   },
 
   checkItem: function() {
     let key = this.px + this.py*module.exports.width;
     if(module.exports.cells[key] === module.exports.symType.ITEM) {
       if(key === module.exports.item) {
-        module.exports.logWrite("Congratulations, you found the special item!");
-        module.exports.logWrite("Select 'New Game' from the File menu to play again");
+        module.exports.logWrite('Congratulations, you found the special item!');
+        module.exports.logWrite('To Play Again Select New Game from the File Menu');
         module.exports.engine.lock();
-        window.removeEventListener("keydown", this);
+        window.removeEventListener('keydown', this);
       } else {
-        module.exports.logWrite("This isn't the special item");
+        module.exports.logWrite('This is not the special item');
       }
     }
   },
@@ -406,12 +433,12 @@ module.exports.Player.prototype = {
     this.px = newX;
     this.py = newY;
     this.draw();
-    window.removeEventListener("keydown", this);
+    window.removeEventListener('keydown', this);
     module.exports.engine.unlock();
   },
 
   draw: function() {
-    module.exports.display.draw(this.px, this.py, "@", "#ff0");
+    module.exports.display.draw(this.px, this.py, '@', '#ff0');
   }
 };
 
@@ -421,7 +448,7 @@ module.exports.Creature.prototype = {
   },
 
   draw: function() {
-    module.exports.display.draw(this.cx, this.cy, "M", "red");
+    module.exports.display.draw(this.cx, this.cy, 'M', 'red');
   },
 
   act: function() {
@@ -440,8 +467,8 @@ module.exports.Creature.prototype = {
 
     path.shift(); // Remove the creatures position
     if (path.length === 1) {
-      alert("Game Over. You were captured by the Creature!");
-      module.exports.logWrite("You lost, better luck next time.");
+      alert('Game Over. You were captured by the Creature!');
+      module.exports.logWrite('You lost, better luck next time.');
       module.exports.engine.lock();
     } else {
       px = path[0][0];
