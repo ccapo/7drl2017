@@ -4,12 +4,19 @@
     const ipc = require('electron').ipcRenderer;
     const BrowserWindow = require('electron').remote.BrowserWindow;
 
-    ipc.on('generate-map', function (event, options, fromWindowId) {
+    ipc.on('generate-first-level', function (event, options, fromWindowId) {
       const fromWindow = BrowserWindow.fromId(fromWindowId);
       const map = generateMap(options.seed, options.w, options.h);
-      fromWindow.webContents.send('map-generated', options, map);
+      fromWindow.webContents.send('first-level-generated', options, map);
       window.close();
-    })
+    });
+
+    ipc.on('generate-new-level', function (event, options, fromWindowId) {
+      const fromWindow = BrowserWindow.fromId(fromWindowId);
+      const map = generateMap(options.seed, options.w, options.h);
+      fromWindow.webContents.send('new-level-generated', options, map);
+      window.close();
+    });
 
     const symType = Object.freeze({FLOOR: 0, WALL: 1, ITEM: 2});
     let width;
