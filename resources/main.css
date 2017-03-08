@@ -42,6 +42,11 @@ li {
   list-style-type: circle;
 }
 
+li:hover {
+  background-color: darkblue;
+  width: 6em;
+}
+
 .selected {
   background-color: darkblue;
   width: 6em;

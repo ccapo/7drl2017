@@ -11,7 +11,7 @@
   "main": "main.js",
   "repository": "https://github.com/ccapo/7drl2017",
   "dependencies": {
-    "electron": "^1.4.1",
+    "electron": "^1.6.1",
     "rot-js": "git+https://github.com/ccapo/rot.js.git#npm-deploy"
   },
     "scripts": {
