@@ -11,9 +11,18 @@
       <div>EscapeCraft: Craft your Escape</div>
     </div>
     <div class='clearfix'>
-      <div id='menu' class='column sidemenu'>
-        <div>Inventory => <button id='craft'>Craft</button></div>
-        <ul id='inventory'></ul>
+      <div class='column sidemenu'>
+        <div class='commands'>
+          <div>Commands</div>
+          <table>
+            <tr><td><button id='craft'>Craft</button></td><td><button id='drop'>Drop</button></td></tr>
+            <tr><td><button id='wear'>Wear</button></td><td><button id='wield'>Wield</button></td></tr>
+          </table>
+          </div>
+        <div class='inventory'>
+          <div>Inventory</div>
+          <ul id='inventory'></ul>
+        </div>
       </div>
       <div id='game' class='column content'>
         <span id='loading-animation' class='pong-loader'></span>

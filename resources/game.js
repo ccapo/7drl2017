@@ -31,6 +31,9 @@ module.exports = {
   loadingAnimation: null,
   loadingMessage: null,
   craftBtn: null,
+  dropBtn: null,
+  wearBtn: null,
+  wieldBtn: null,
 
   // Clean up game state
   cleanUp: function() {
@@ -89,6 +92,9 @@ module.exports = {
 
     this.inventoryElement = document.getElementById('inventory');
     this.craftBtn = document.getElementById('craft');
+    this.dropBtn = document.getElementById('drop');
+    this.wearBtn = document.getElementById('wear');
+    this.wieldBtn = document.getElementById('wield');
 
     // Remove all items from inventory
     while (this.inventoryElement.firstChild) {
@@ -249,15 +255,81 @@ module.exports = {
         }
         let newItem = this.craftItem(itemsArray);
         if (newItem) {
-          let newInventory = document.createElement("LI");
-          let textNode = document.createTextNode(newItem.name);
-          newInventory.appendChild(textNode);
-          newInventory.dataset.id = newItem.id;
-          newInventory.onclick = () => {newInventory.classList.toggle('selected')};
-          this.inventoryElement.appendChild(newInventory);
+          let index = -1;
+          for(let i = 0; i < this.inventory.length; i++) {
+            let inv = this.inventory[i];
+            if (inv.id === newItem.id) {
+              index = i;
+            }
+          }
+          if (index === -1) {
+            this.inventory.push(newItem);
+            let newInventory = document.createElement("LI");
+            let textNode = document.createTextNode(newItem.name);
+            newInventory.appendChild(textNode);
+            newInventory.dataset.id = newItem.id;
+            newInventory.onclick = () => {newInventory.classList.toggle('selected')};
+            this.inventoryElement.appendChild(newInventory);
+          } else {
+            this.logWrite(`${newItem.name} Already in Inventory`);
+          }
         }
       } else {
         alert('Please select two or more items to craft');
+      }
+    };
+
+    // Add on click listener for drop button
+    this.dropBtn.onclick = () => {
+      let selectedItems = document.querySelectorAll(".selected");
+      if (selectedItems.length > 0) {
+        let itemsArray = [];
+        for (let item of selectedItems) {
+          this.logWrite(`You Dropped ${item.innerHTML}!`);
+          let index = -1;
+          for(let i = 0; i < this.inventory.length; i++) {
+            let inv = this.inventory[i];
+            if (inv.id === parseInt(item.dataset.id)) {
+              index = i;
+            }
+          }
+          if (index > -1) {
+            this.inventory.splice(index, 1);
+          }
+          item.remove();
+        }
+      } else {
+        alert('Please select an item to drop');
+      }
+    };
+
+    // Add on click listener for wear button
+    this.wearBtn.onclick = () => {
+      let selectedItems = document.querySelectorAll(".selected");
+      if (selectedItems.length > 0) {
+        // Wear item
+        for (let item of selectedItems) {
+          this.logWrite(`You Wear ${item.innerHTML}!`);
+          item.innerHTML = item.innerHTML + ' (worn)';
+          item.classList.remove('selected');
+        }
+      } else {
+        alert('Please select an item to wear');
+      }
+    };
+
+    // Add on click listener for wield button
+    this.wieldBtn.onclick = () => {
+      let selectedItems = document.querySelectorAll(".selected");
+      if (selectedItems.length > 0) {
+        // Wield item
+        for (let item of selectedItems) {
+          this.logWrite(`You Wield ${item.innerHTML}!`);
+          item.innerHTML = item.innerHTML + ' (wielded)';
+          item.classList.remove('selected');
+        }
+      } else {
+        alert('Please select an item to wield');
       }
     };
   },

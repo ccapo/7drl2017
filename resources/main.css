@@ -23,15 +23,33 @@ body {
 }
 
 .sidemenu {
-  margin-top: 33px;
+  margin-top: 20px;
   width: 25%;
-  min-height: 757px;
-  border: #777777;
-  border-style: dashed;
 }
 
 .content {
   width: 75%;
+}
+
+.commands {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border: #777777;
+  border-style: dashed;
+}
+
+.inventory {
+  min-height: 648px;
+  margin-top: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border: #777777;
+  border-style: dashed;
+}
+
+table {
+  margin-left: auto;
+  margin-right: auto;
 }
 
 ul {
