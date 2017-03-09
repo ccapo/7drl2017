@@ -52,6 +52,10 @@ table {
   margin-right: auto;
 }
 
+button {
+  width: 50px;
+}
+
 ul {
   text-align: left
 }

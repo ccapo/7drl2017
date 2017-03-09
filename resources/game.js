@@ -238,12 +238,6 @@ module.exports = {
       this.inventoryElement.appendChild(newInventory);
     }
 
-    // Add on click listeners for current inventory items
-    //let elements = document.getElementsByTagName('li');
-    //for(let element of elements) {
-    //  element.onclick = () => {element.classList.toggle('selected')};
-    //}
-
     // Add on click listener for craft button
     this.craftBtn.onclick = () => {
       let selectedItems = document.querySelectorAll(".selected");
@@ -353,14 +347,14 @@ module.exports = {
   },
 
   // Write to the message log
-  logWrite: function(msg) {
+  logWrite: function(message, msgColour) {
     // If the log is full, remove first entry
     if( this.log.messages.length === this.logHeight - 2 ) {
 	    this.log.messages.splice(0, 1);
     }
 
     // Push new message into array
-    this.log.messages.push(msg);
+    this.log.messages.push({text: message, colour: msgColour});
 
     // Erase old messages
     for(let x = 2; x < this.width - 2; x++) {
@@ -373,7 +367,11 @@ module.exports = {
     let y = 1, fraction = 0.0;
     for(let i = this.log.messages.length - 1; i >= 0; i--) {
       let colour = ROT.Color.toHex(ROT.Color.interpolate([204, 204, 204], [0, 0, 0], fraction));
-      this.log.drawText(2, y++, '%c{' + colour + '}' + this.log.messages[i]);
+      if (this.log.messages[i].colour) {
+        this.log.drawText(2, y++, '%c{' + this.log.messages[i].colour + '}' + this.log.messages[i].text);
+      } else {
+        this.log.drawText(2, y++, '%c{' + colour + '}' + this.log.messages[i].text);
+      }
       fraction += 0.15
     }
   },
@@ -521,10 +519,8 @@ module.exports = {
           items.splice(index, 1);
         }
       }
-      console.log(`You Crafted ${newItem.name}!`);
-      this.logWrite(`You Crafted ${newItem.name}!`);
+      this.logWrite(`You Crafted ${newItem.name}!`, '#0000ff');
     } else {
-      console.log(`Hmm ... that didn't work`);
       this.logWrite(`Hmm ... that didn't work`);
     }
 
@@ -554,8 +550,8 @@ module.exports.Player.prototype = {
     let key = this.px + this.py*module.exports.width;
     if(module.exports.cells[key] === module.exports.symType.ITEM) {
       if(key === module.exports.item) {
-        module.exports.logWrite('Congratulations, you found the special item!');
-        module.exports.logWrite('To Play Again Select New Game from the File/Application Menu');
+        module.exports.logWrite('Congratulations, you found the special item!', '#00ff00');
+        module.exports.logWrite('To Play Again Select New Game from the File/Application Menu', '#00ff00');
         module.exports.engine.lock();
         window.removeEventListener('keydown', this);
       } else {
@@ -566,18 +562,37 @@ module.exports.Player.prototype = {
   },
 
   handleEvent: function(event) {
+    // Define keybindings
     let keyMap = {};
-    keyMap[38] = 0;
-    keyMap[33] = 1;
-    keyMap[39] = 2;
-    keyMap[34] = 3;
-    keyMap[40] = 4;
-    keyMap[35] = 5;
-    keyMap[37] = 6;
-    keyMap[36] = 7;
+    keyMap[ROT.VK_UP] = 0;        // Up Arrow Key (UP)
+    keyMap[ROT.VK_PAGE_UP] = 1;   // Page Up Key (UP+RIGHT)
+    keyMap[ROT.VK_RIGHT] = 2;     // Right Arrow Key (RIGHT)
+    keyMap[ROT.VK_PAGE_DOWN] = 3; // Page Down Key (DOWN+RIGHT)
+    keyMap[ROT.VK_DOWN] = 4;      // Down Arrow Key (DOWN)
+    keyMap[ROT.VK_END] = 5;       // End Key (DOWN+LEFT)
+    keyMap[ROT.VK_LEFT] = 6;      // Left Arrow Key (LEFT)
+    keyMap[ROT.VK_HOME] = 7;      // Home Key (UP+LEFT)
+
+    keyMap[ROT.VK_NUMPAD8] = 0;   // Numpad 8 (UP)
+    keyMap[ROT.VK_NUMPAD9] = 1;   // Numpad 9 (UP+RIGHT)
+    keyMap[ROT.VK_NUMPAD6] = 2;   // Numpad 6 (RIGHT)
+    keyMap[ROT.VK_NUMPAD3] = 3;   // Numpad 3 (DOWN+RIGHT)
+    keyMap[ROT.VK_NUMPAD2] = 4;   // Numpad 2 (DOWN)
+    keyMap[ROT.VK_NUMPAD1] = 5;   // Numpad 1 (DOWN+LEFT)
+    keyMap[ROT.VK_NUMPAD4] = 6;   // Numpad 4 (LEFT)
+    keyMap[ROT.VK_NUMPAD7] = 7;   // Numpad 7 (UP+LEFT)
+
+    keyMap[ROT.VK_W] = 0;         // W Key (UP)
+    keyMap[ROT.VK_E] = 1;         // E Key (UP+RIGHT)
+    keyMap[ROT.VK_D] = 2;         // D Key (RIGHT)
+    keyMap[ROT.VK_C] = 3;         // C Key (DOWN+RIGHT)
+    keyMap[ROT.VK_X] = 4;         // X Key (DOWN)
+    keyMap[ROT.VK_Z] = 5;         // Z Key (DOWN+LEFT)
+    keyMap[ROT.VK_A] = 6;         // A Key (LEFT)
+    keyMap[ROT.VK_Q] = 7;         // Q Key (UP+LEFT)
 
     let code = event.keyCode;
-    if(code === 13 || code === 32) {
+    if(code === ROT.VK_RETURN || code === ROT.VK_SPACE) {
       this.checkItem();
       return;
     }
@@ -632,9 +647,10 @@ module.exports.Creature.prototype = {
 
     path.shift(); // Remove the creatures position
     if (path.length === 1) {
-      alert('Game Over. You were captured by the Creature!');
-      module.exports.logWrite('You lost, better luck next time.');
+      module.exports.logWrite('You were captured by the Creature!', '#ff0000');
+      module.exports.logWrite('Game Over, better luck next time.', '#ff0000');
       module.exports.engine.lock();
+      window.removeEventListener('keydown', module.exports.Player);
     } else {
       px = path[0][0];
       py = path[0][1];

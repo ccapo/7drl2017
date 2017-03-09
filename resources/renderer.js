@@ -4,9 +4,14 @@ const path = require('path');
 const url = require('url');
 const Game = require('./game');
 
-let levelCounter = 0;
+let levels = [];
 
 function generateFirstLevel(windowId) {
+  // Reset level data
+  levels = [];
+
+  console.log(`Generating Level ${levels.length} ...`);
+
   let win = new BrowserWindow({ width: 400, height: 400, show: false });
   win.loadURL(url.format({
     pathname: path.join(__dirname, 'generateMap.html'),
@@ -17,12 +22,14 @@ function generateFirstLevel(windowId) {
   win.webContents.on('did-finish-load', () => {
     //const seed = 1442796044743;
     const seed = Date.now();
-    const options = {seed: seed, w: 64, h: Math.abs(64 - 9)};
+    const options = {seed: seed, w: 64, h: 55, windowId: windowId};
     win.webContents.send('generate-first-level', options, windowId);
   });
 }
 
 function generateNewLevel(windowId) {
+  console.log(`Generating Level ${levels.length} ...`);
+
   let win = new BrowserWindow({ width: 400, height: 400, show: false });
   win.loadURL(url.format({
     pathname: path.join(__dirname, 'generateMap.html'),
@@ -33,23 +40,18 @@ function generateNewLevel(windowId) {
   win.webContents.on('did-finish-load', () => {
     //const seed = 1442796044743;
     const seed = Date.now();
-    const options = {seed: seed, w: 64, h: Math.abs(64 - 9), windowId: windowId};
+    const options = {seed: seed, w: 64, h: 55, windowId: windowId};
     win.webContents.send('generate-new-level', options, windowId);
   });
 }
 
 ipcRenderer.on('new-game', (event, windowId) => {
-  console.log('Generating First Level ...');
-
   Game.cleanUp();
-
   generateFirstLevel(windowId);
 });
 
 ipcRenderer.on('first-level-generated', (event, options, map) => {
   console.log(`A map with width: ${options.w}, height: ${options.h} and seed: ${options.seed} was generated`);
-
-  levelCounter = 1;
 
   // Remove loading animation and message
   let element = document.getElementById('loading-animation');
@@ -73,24 +75,25 @@ ipcRenderer.on('first-level-generated', (event, options, map) => {
   // Initialize game
   Game.init(map.cells, map.floorCells);
 
-  console.log('Generating New Level ...');
+  // Store new level here
+  levels.push(map);
 
+  // Generate next level
   generateNewLevel(options.windowId);
 });
 
 ipcRenderer.on('new-level-generated', (event, options, map) => {
   console.log(`A map with width: ${options.w}, height: ${options.h} and seed: ${options.seed} was generated`);
 
-  levelCounter += 1;
-
-  console.log(`Level: ${levelCounter}`);
-
   // Store new level here
+  levels.push(map);
 
+  // If we haven't generated enough levels
   if (levelCounter < 5) {
-    console.log('Generating New Level ...');
+    // Generate next level
     generateNewLevel(options.windowId);
   } else {
+    // We are done
     console.log('Finished generating levels');
   }
 });
