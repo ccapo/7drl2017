@@ -18,9 +18,9 @@
       window.close();
     });
 
-    const symType = Object.freeze({FLOOR: 0, WALL: 1, ITEM: 2});
-    let width;
-    let height;
+    const symType = Object.freeze({FLOOR: 0, WALL: 1, ITEM: 2, EXIT: 3});
+    let width = null;
+    let height = null;
     let cells = [];
     let floorCells = [];
     let pathExists = false;
@@ -101,8 +101,13 @@
       }
 
       return {
+        width: width,
+        height: height,
         cells: cells,
-        floorCells: floorCells
+        floorCells: floorCells,
+        items: [],
+        creatures: [],
+        exit: {}
       };
     }
 

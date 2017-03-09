@@ -4,13 +4,11 @@ const path = require('path');
 const url = require('url');
 const Game = require('./game');
 
-let levels = [];
-
 function generateFirstLevel(windowId) {
   // Reset level data
-  levels = [];
+  Game.levels = [];
 
-  console.log(`Generating Level ${levels.length} ...`);
+  console.log(`Generating Level 1/${Game.MAXLEVELS}`);
 
   let win = new BrowserWindow({ width: 400, height: 400, show: false });
   win.loadURL(url.format({
@@ -20,15 +18,15 @@ function generateFirstLevel(windowId) {
   }));
 
   win.webContents.on('did-finish-load', () => {
-    //const seed = 1442796044743;
-    const seed = Date.now();
+    const seed = 1442796044743;
+    //const seed = Date.now();
     const options = {seed: seed, w: 64, h: 55, windowId: windowId};
     win.webContents.send('generate-first-level', options, windowId);
   });
 }
 
 function generateNewLevel(windowId) {
-  console.log(`Generating Level ${levels.length} ...`);
+  console.log(`Generating Level ${Game.levels.length + 1}/${Game.MAXLEVELS}`);
 
   let win = new BrowserWindow({ width: 400, height: 400, show: false });
   win.loadURL(url.format({
@@ -38,21 +36,19 @@ function generateNewLevel(windowId) {
   }));
 
   win.webContents.on('did-finish-load', () => {
-    //const seed = 1442796044743;
-    const seed = Date.now();
+    const seed = 1442796044743;
+    //const seed = Date.now();
     const options = {seed: seed, w: 64, h: 55, windowId: windowId};
     win.webContents.send('generate-new-level', options, windowId);
   });
 }
 
 ipcRenderer.on('new-game', (event, windowId) => {
-  Game.cleanUp();
+  Game.cleanUp(true);
   generateFirstLevel(windowId);
 });
 
 ipcRenderer.on('first-level-generated', (event, options, map) => {
-  console.log(`A map with width: ${options.w}, height: ${options.h} and seed: ${options.seed} was generated`);
-
   // Remove loading animation and message
   let element = document.getElementById('loading-animation');
   element.classList.remove('pong-loader');
@@ -60,40 +56,45 @@ ipcRenderer.on('first-level-generated', (event, options, map) => {
   element.innerHTML = '';
 
   // Initialize canvas elements
-  Game.initCanvas(options.w, options.h);
+  Game.initCanvas(map);
+
+  console.log(`Generated Level ${Game.levels.length}/${Game.MAXLEVELS}`);
 
   // Create items
-  Game.generateItems(map.cells, map.floorCells);
+  Game.generateItems();
 
   // Draw map
-  Game.drawMap(map.cells);
+  Game.drawMap();
 
   // Create and draw the player and a creature
-  Game.player = Game.createEntity(Game.Player, map.floorCells);
-  Game.creature = Game.createEntity(Game.Creature, map.floorCells);
+  Game.player = Game.createEntity(Game.Player);
+  Game.creature = Game.createEntity(Game.Creature);
 
   // Initialize game
-  Game.init(map.cells, map.floorCells);
-
-  // Store new level here
-  levels.push(map);
-
-  // Generate next level
-  generateNewLevel(options.windowId);
-});
-
-ipcRenderer.on('new-level-generated', (event, options, map) => {
-  console.log(`A map with width: ${options.w}, height: ${options.h} and seed: ${options.seed} was generated`);
-
-  // Store new level here
-  levels.push(map);
+  Game.init(true);
 
   // If we haven't generated enough levels
-  if (levelCounter < 5) {
+  if (Game.levels.length < Game.MAXLEVELS) {
     // Generate next level
     generateNewLevel(options.windowId);
   } else {
     // We are done
-    console.log('Finished generating levels');
+    console.log('Finished Generating Levels');
+  }
+});
+
+ipcRenderer.on('new-level-generated', (event, options, map) => {
+  // Store new level
+  Game.levels.push(map);
+
+  console.log(`Generated Level ${Game.levels.length}/${Game.MAXLEVELS}`);
+
+  // If we haven't generated enough levels
+  if (Game.levels.length < Game.MAXLEVELS) {
+    // Generate next level
+    generateNewLevel(options.windowId);
+  } else {
+    // We are done
+    console.log('Finished Generating Levels');
   }
 });
