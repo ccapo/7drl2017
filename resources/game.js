@@ -14,6 +14,12 @@ module.exports = {
   symType: Object.freeze({FLOOR: 0, WALL: 1, ITEM: 2, EXITUP: 3, EXITDOWN: 4}),
 
   // Global variables
+  displayWidth: null,
+  displayHeight: null,
+  displayOffsetX: 0,
+  displayOffsetY: 0,
+  width: null,
+  height: null,
   levels: [],
   levelId: 0,
   MAXLEVELS: 2,
@@ -114,8 +120,8 @@ module.exports = {
     }
 
     let displayOptions = {
-      width: map.width,
-      height: map.height,
+      width: map.displayWidth,
+      height: map.displayHeight,
       fontSize: this.fontSize,
       fontFamily: this.fontFamily,
       fontStyle: 'bold',
@@ -125,6 +131,11 @@ module.exports = {
     // Store first level
     this.levelId = 0;
     this.levels = [map];
+
+    this.displayWidth = map.displayWidth;
+    this.displayHeight = map.displayHeight;
+    this.width = map.width;
+    this.height = map.height;
 
     // Player Stats, Game Display and Message Log
     let statusOptions = Object.assign({}, displayOptions, {height: this.statusHeight});
@@ -318,7 +329,7 @@ module.exports = {
   // Initialize the message log, inventory and crucible panels
   initPanels: function() {
     // Create border for top and bottom of message log
-    for(let x = 0; x < this.levels[this.levelId].width; x++) {
+    for(let x = 0; x < this.displayWidth; x++) {
       this.log.drawText(x, 0, '-');
       this.log.drawText(x, this.logHeight - 1, '-');
     }
@@ -326,7 +337,7 @@ module.exports = {
     // Create border for left and right of message log
     for(let y = 1; y < this.logHeight - 1; y++) {
       this.log.drawText(0, y, '|');
-      this.log.drawText(this.levels[this.levelId].width - 1, y, '|');
+      this.log.drawText(this.displayWidth - 1, y, '|');
     }
 
     // Title for message log
@@ -344,7 +355,7 @@ module.exports = {
     this.log.messages.push({text: message, colour: msgColour});
 
     // Erase old messages
-    for(let x = 2; x < this.levels[this.levelId].width - 2; x++) {
+    for(let x = 2; x < this.displayWidth - 2; x++) {
       for(let y = 1; y < this.logHeight - 2; y++) {
         this.log.draw(x, y, ' ', '#000000');
       }
@@ -372,7 +383,7 @@ module.exports = {
     this.status.drawText(1, 0, statusStr);
   },
 
-  // Generate Items
+  // Generate Items and Exits
   generateItems: function() {
     if (this.levels[this.levelId].items.length !== this.MAXITEMS) {
       for(let i = 0; i < this.MAXITEMS; i++) {
@@ -406,15 +417,15 @@ module.exports = {
   createEntity: function(entity) {
     let index = Math.floor(ROT.RNG.getUniform() * this.levels[this.levelId].floorCells.length);
     let key = this.levels[this.levelId].floorCells.splice(index, 1)[0];
-    let x = key % this.levels[this.levelId].width;
-    let y = Math.floor(key/this.levels[this.levelId].width);
+    let x = key % this.width;
+    let y = Math.floor(key/this.width);
     return new entity(x, y);
   },
 
   // Draw a tile
   drawTile: function(key, value) {
-    let x = key % this.levels[this.levelId].width;
-    let y = Math.floor(key/this.levels[this.levelId].width);
+    let x = key % this.width;
+    let y = Math.floor(key/this.width);
     switch (value) {
       case module.exports.symType.FLOOR: {
         this.display.draw(x, y, ' ', '#000000');
@@ -444,9 +455,36 @@ module.exports = {
 
   // Draw the map
   drawMap: function() {
-    for(let k = 0; k < this.levels[this.levelId].cells.length; k++) {
-      this.drawTile(k, this.levels[this.levelId].cells[k]);
+    // Only draw what is centred on the player
+    for(let x = this.displayOffsetX; x < this.displayWidth + this.displayOffsetX + 1; x++) {
+      for(let y = this.displayOffsetY; y < this.displayHeight + this.displayOffsetY + 1; y++) {
+        let offset = x + this.width*y;
+        let poffset = (x - this.displayOffsetX) + this.width*(y - this.displayOffsetY);
+        this.drawTile(poffset, this.levels[this.levelId].cells[offset]);
+      }
     }
+
+    //for(let k = 0; k < this.levels[this.levelId].cells.length; k++) {
+    //  this.drawTile(k, this.levels[this.levelId].cells[k]);
+    //}
+  },
+
+  // Move camera
+  moveCamera: function(x, y) {
+    // New display coordinates (top-left corner of the screen relative to the map)
+    // Coordinates so that the target is at the center of the screen
+    let cx = x - this.displayWidth/2;
+    let cy = y - this.displayHeight/2;
+
+    // Make sure the DISPLAY doesn't see outside the map
+    if(cx < 0) cx = 0;
+    if(cy < 0) cy = 0;
+    if(cx > this.width - this.displayWidth - 1) cx = this.width - this.displayWidth - 1;
+    if(cy > this.height - this.displayHeight - 1) cy = this.height - this.displayHeight - 1;
+
+    // Display offsets
+    this.displayOffsetX = cx;
+    this.displayOffsetY = cy;
   },
 
   // The player constructor
@@ -557,7 +595,7 @@ module.exports.Player.prototype = {
   },
 
   checkAction: function() {
-    let key = this.px + this.py*module.exports.levels[module.exports.levelId].width;
+    let key = this.px + this.py*module.exports.width;
     if(module.exports.levels[module.exports.levelId].cells[key] >= module.exports.symType.ITEM) {
       let isExitUp = (key === module.exports.levels[module.exports.levelId].exitUp.key);
       let isExitDown = (key === module.exports.levels[module.exports.levelId].exitDown.key);
@@ -653,15 +691,22 @@ module.exports.Player.prototype = {
       let dir = ROT.DIRS[8][keyMap[code]];
       let newX = this.px + dir[0];
       let newY = this.py + dir[1];
-      let newKey = newX + newY*module.exports.levels[module.exports.levelId].width;
+      let newKey = newX + newY*module.exports.width;
       if(module.exports.levels[module.exports.levelId].cells[newKey] === module.exports.symType.WALL) { return; }
 
-      let oldKey = this.px + this.py*module.exports.levels[module.exports.levelId].width;
+      let oldKey = this.px + this.py*module.exports.width;
       module.exports.drawTile(oldKey, module.exports.levels[module.exports.levelId].cells[oldKey]);
 
       this.px = newX;
       this.py = newY;
+
+      module.exports.moveCamera(this.px, this.py);
+      module.exports.display.clear();
+      module.exports.drawMap();
+
       this.draw();
+      module.exports.creature.draw();
+
       window.removeEventListener('keydown', this);
       module.exports.engine.unlock();
     } else {
@@ -673,7 +718,7 @@ module.exports.Player.prototype = {
   },
 
   draw: function() {
-    module.exports.display.draw(this.px, this.py, '@', '#ffff00');
+    module.exports.display.draw(this.px - module.exports.displayOffsetX, this.py - module.exports.displayOffsetY, '@', '#ffff00');
   }
 };
 
@@ -683,14 +728,14 @@ module.exports.Creature.prototype = {
   },
 
   draw: function() {
-    module.exports.display.draw(this.cx, this.cy, 'M', 'red');
+    module.exports.display.draw(this.cx - module.exports.displayOffsetX, this.cy - module.exports.displayOffsetY, 'M', 'red');
   },
 
   act: function() {
     let px = module.exports.player.getX();
     let py = module.exports.player.getY();
     let passableCallback = function(x, y) {
-      return (module.exports.levels[module.exports.levelId].cells[x + y*module.exports.levels[module.exports.levelId].width] !== module.exports.symType.WALL);
+      return (module.exports.levels[module.exports.levelId].cells[x + y*module.exports.width] !== module.exports.symType.WALL);
     }
     let astar = new ROT.Path.AStar(px, py, passableCallback, {topology: 8});
 
@@ -704,7 +749,7 @@ module.exports.Creature.prototype = {
     if (path.length > 1) {
       px = path[0][0];
       py = path[0][1];
-      let key = this.cx + this.cy*module.exports.levels[module.exports.levelId].width;
+      let key = this.cx + this.cy*module.exports.width;
       module.exports.drawTile(key, module.exports.levels[module.exports.levelId].cells[key]);
       this.cx = px;
       this.cy = py;

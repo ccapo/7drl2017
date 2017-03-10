@@ -4,13 +4,19 @@ const path = require('path');
 const url = require('url');
 const Game = require('./game');
 
+const hiddenWH = 400;
+const displayWidth = 64;
+const displayHeight = 55;
+const mapWidth = displayWidth+10;
+const mapHeight = displayHeight+10;
+
 function generateFirstLevel(windowId) {
   // Reset level data
   Game.levels = [];
 
   console.log(`Generating Level 1/${Game.MAXLEVELS}`);
 
-  let win = new BrowserWindow({ width: 400, height: 400, show: false });
+  let win = new BrowserWindow({ width: hiddenWH, height: hiddenWH, show: false });
   win.loadURL(url.format({
     pathname: path.join(__dirname, 'generateMap.html'),
     protocol: 'file:',
@@ -20,7 +26,7 @@ function generateFirstLevel(windowId) {
   win.webContents.on('did-finish-load', () => {
     const seed = 1442796044743;
     //const seed = Date.now();
-    const options = {seed: seed, w: 64, h: 55, windowId: windowId};
+    const options = {seed: seed, displayWidth: displayWidth, displayHeight: displayHeight, mapWidth: mapWidth, mapHeight: mapHeight, windowId: windowId};
     win.webContents.send('generate-first-level', options, windowId);
   });
 }
@@ -28,7 +34,7 @@ function generateFirstLevel(windowId) {
 function generateNewLevel(windowId) {
   console.log(`Generating Level ${Game.levels.length + 1}/${Game.MAXLEVELS}`);
 
-  let win = new BrowserWindow({ width: 400, height: 400, show: false });
+  let win = new BrowserWindow({ width: hiddenWH, height: hiddenWH, show: false });
   win.loadURL(url.format({
     pathname: path.join(__dirname, 'generateMap.html'),
     protocol: 'file:',
@@ -38,7 +44,7 @@ function generateNewLevel(windowId) {
   win.webContents.on('did-finish-load', () => {
     const seed = 1442796044743;
     //const seed = Date.now();
-    const options = {seed: seed, w: 64, h: 55, windowId: windowId};
+    const options = {seed: seed, displayWidth: displayWidth, displayHeight: displayHeight, mapWidth: mapWidth, mapHeight: mapHeight, windowId: windowId};
     win.webContents.send('generate-new-level', options, windowId);
   });
 }

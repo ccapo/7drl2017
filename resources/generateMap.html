@@ -6,14 +6,14 @@
 
     ipc.on('generate-first-level', function (event, options, fromWindowId) {
       const fromWindow = BrowserWindow.fromId(fromWindowId);
-      const map = generateMap(options.seed, options.w, options.h);
+      const map = generateMap(options.seed, options.mapWidth, options.mapHeight, options.displayWidth, options.displayHeight);
       fromWindow.webContents.send('first-level-generated', options, map);
       window.close();
     });
 
     ipc.on('generate-new-level', function (event, options, fromWindowId) {
       const fromWindow = BrowserWindow.fromId(fromWindowId);
-      const map = generateMap(options.seed, options.w, options.h);
+      const map = generateMap(options.seed, options.mapWidth, options.mapHeight, options.displayWidth, options.displayHeight);
       fromWindow.webContents.send('new-level-generated', options, map);
       window.close();
     });
@@ -28,11 +28,13 @@
     /**
      * Generate a map
      * @param seed
-     * @param width
-     * @param height
+     * @param mapWidth
+     * @param mapHeight
+     * @param displayWidth
+     * @param displayHeight
      * @returns {{seed: (*|number), width: *, height: *, cells: (Array|*), floorCells: Array}}
      */
-    function generateMap(seed, w, h) {
+    function generateMap(seed, w, h, dw, dh) {
       width = w;
       height = h;
       seed = seed || 0;
@@ -101,8 +103,10 @@
       }
 
       return {
-        width: width,
-        height: height,
+        width: w,
+        height: h,
+        displayWidth: dw,
+        displayHeight: dh,
         cells: cells,
         floorCells: floorCells,
         items: [],
