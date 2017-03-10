@@ -455,6 +455,9 @@ module.exports = {
 
   // Draw the map
   drawMap: function() {
+    // Clear the display
+    this.display.clear();
+  
     // Only draw what is centred on the player
     for(let x = 0; x < this.displayWidth; x++) {
       for(let y = 0; y < this.displayHeight; y++) {
@@ -463,24 +466,24 @@ module.exports = {
         this.drawTile(offset, this.levels[this.levelId].cells[poffset]);
       }
     }
-
-    //for(let k = 0; k < this.levels[this.levelId].cells.length; k++) {
-    //  this.drawTile(k, this.levels[this.levelId].cells[k]);
-    //}
   },
 
   // Move camera
   moveCamera: function(x, y) {
     // New display coordinates (top-left corner of the screen relative to the map)
     // Coordinates so that the target is at the center of the screen
-    let cx = x - this.displayWidth/2;
-    let cy = y - this.displayHeight/2;
+    let cx = x - Math.floor(this.displayWidth/2);
+    let cy = y - Math.floor(this.displayHeight/2);
+    console.log(`displayWidth: ${this.displayWidth}, displayHeight: ${this.displayHeight}`);
+    console.log(`px: ${x}, py: ${y}`);
+    console.log(`raw cx: ${cx}, raw cy: ${cy}`);
 
     // Make sure the DISPLAY doesn't see outside the map
     if(cx < 0) cx = 0;
     if(cy < 0) cy = 0;
-    if(cx > this.width - this.displayWidth - 1) cx = this.width - this.displayWidth - 1;
-    if(cy > this.height - this.displayHeight - 1) cy = this.height - this.displayHeight - 1;
+    if(cx > this.width - this.displayWidth) cx = this.width - this.displayWidth;
+    if(cy > this.height - this.displayHeight) cy = this.height - this.displayHeight;
+    console.log(`cx: ${cx}, cy: ${cy}`);
 
     // Display offsets
     this.displayOffsetX = cx;
@@ -701,7 +704,6 @@ module.exports.Player.prototype = {
       this.py = newY;
 
       module.exports.moveCamera(this.px, this.py);
-      module.exports.display.clear();
       module.exports.drawMap();
 
       this.draw();
@@ -754,7 +756,6 @@ module.exports.Creature.prototype = {
       this.cx = px;
       this.cy = py;
 
-      module.exports.display.clear();
       module.exports.drawMap();
 
       this.draw();

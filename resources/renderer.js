@@ -7,8 +7,10 @@ const Game = require('./game');
 const hiddenWH = 400;
 const displayWidth = 64;
 const displayHeight = 55;
-const mapWidth = displayWidth+10;
-const mapHeight = displayHeight+10;
+const mapWidth = Math.floor(3*displayWidth/2);
+const mapHeight = Math.floor(3*displayHeight/2);
+console.log(`displayWidth: ${displayWidth}, displayHeight: ${displayHeight}`);
+console.log(`mapWidth: ${mapWidth}, mapHeight: ${mapHeight}`);
 
 function generateFirstLevel(windowId) {
   // Reset level data
@@ -24,8 +26,8 @@ function generateFirstLevel(windowId) {
   }));
 
   win.webContents.on('did-finish-load', () => {
-    const seed = 1442796044743;
-    //const seed = Date.now();
+    //const seed = 1442796044743;
+    const seed = Date.now();
     const options = {seed: seed, displayWidth: displayWidth, displayHeight: displayHeight, mapWidth: mapWidth, mapHeight: mapHeight, windowId: windowId};
     win.webContents.send('generate-first-level', options, windowId);
   });
@@ -42,8 +44,8 @@ function generateNewLevel(windowId) {
   }));
 
   win.webContents.on('did-finish-load', () => {
-    const seed = 1442796044743;
-    //const seed = Date.now();
+    //const seed = 1442796044743;
+    const seed = Date.now();
     const options = {seed: seed, displayWidth: displayWidth, displayHeight: displayHeight, mapWidth: mapWidth, mapHeight: mapHeight, windowId: windowId};
     win.webContents.send('generate-new-level', options, windowId);
   });
@@ -69,15 +71,13 @@ ipcRenderer.on('first-level-generated', (event, options, map) => {
   // Create items
   Game.generateItems();
 
-  // Draw map
-  Game.drawMap();
-
   // Create and draw the player and a creature
   Game.player = Game.createEntity(Game.Player);
   Game.creature = Game.createEntity(Game.Creature);
 
   Game.moveCamera(Game.player.px, Game.player.py);
 
+  // Draw map, the player and the creature
   Game.drawMap();
   Game.player.draw();
   Game.creature.draw();
