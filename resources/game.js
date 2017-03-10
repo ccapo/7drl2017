@@ -456,11 +456,11 @@ module.exports = {
   // Draw the map
   drawMap: function() {
     // Only draw what is centred on the player
-    for(let x = this.displayOffsetX; x < this.displayWidth + this.displayOffsetX + 1; x++) {
-      for(let y = this.displayOffsetY; y < this.displayHeight + this.displayOffsetY + 1; y++) {
+    for(let x = 0; x < this.displayWidth; x++) {
+      for(let y = 0; y < this.displayHeight; y++) {
         let offset = x + this.width*y;
-        let poffset = (x - this.displayOffsetX) + this.width*(y - this.displayOffsetY);
-        this.drawTile(poffset, this.levels[this.levelId].cells[offset]);
+        let poffset = (x + this.displayOffsetX) + this.width*(y + this.displayOffsetY);
+        this.drawTile(offset, this.levels[this.levelId].cells[poffset]);
       }
     }
 
@@ -509,7 +509,7 @@ module.exports = {
     this.py = y;
 
     // Draw player
-    this.draw();
+    //this.draw();
   },
 
   Creature: function(x, y) {
@@ -530,7 +530,7 @@ module.exports = {
 
     this.cx = x;
     this.cy = y;
-    this.draw();
+    //this.draw();
   },
 
   // Craft item function
@@ -694,7 +694,7 @@ module.exports.Player.prototype = {
       let newKey = newX + newY*module.exports.width;
       if(module.exports.levels[module.exports.levelId].cells[newKey] === module.exports.symType.WALL) { return; }
 
-      let oldKey = this.px + this.py*module.exports.width;
+      let oldKey = (this.px - module.exports.displayOffsetX) + (this.py - module.exports.displayOffsetY)*module.exports.width;
       module.exports.drawTile(oldKey, module.exports.levels[module.exports.levelId].cells[oldKey]);
 
       this.px = newX;
@@ -749,10 +749,17 @@ module.exports.Creature.prototype = {
     if (path.length > 1) {
       px = path[0][0];
       py = path[0][1];
-      let key = this.cx + this.cy*module.exports.width;
+      let key = (this.cx - module.exports.displayOffsetX) + (this.cy - module.exports.displayOffsetY)*module.exports.width;
       module.exports.drawTile(key, module.exports.levels[module.exports.levelId].cells[key]);
       this.cx = px;
       this.cy = py;
+
+      module.exports.display.clear();
+      module.exports.drawMap();
+
+      this.draw();
+      module.exports.player.draw();
+
       this.draw();
     } else {
       module.exports.logWrite('You were captured by the Creature!', '#ff0000');

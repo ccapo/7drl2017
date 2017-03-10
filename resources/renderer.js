@@ -76,6 +76,12 @@ ipcRenderer.on('first-level-generated', (event, options, map) => {
   Game.player = Game.createEntity(Game.Player);
   Game.creature = Game.createEntity(Game.Creature);
 
+  Game.moveCamera(Game.player.px, Game.player.py);
+
+  Game.drawMap();
+  Game.player.draw();
+  Game.creature.draw();
+
   // Initialize game
   Game.init(true);
 
