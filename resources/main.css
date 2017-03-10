@@ -53,7 +53,7 @@ table {
 }
 
 button {
-  width: 50px;
+  width: 70px;
 }
 
 ul {
@@ -66,10 +66,10 @@ li {
 
 li:hover {
   background-color: darkblue;
-  width: 6em;
+  width: 90%;
 }
 
 .selected {
   background-color: darkblue;
-  width: 6em;
+  width: 90%;
 }

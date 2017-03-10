@@ -11,7 +11,7 @@ module.exports = {
   logHeight: 8,
   fontSize: 12,
   fontFamily: 'helvetica',
-  symType: Object.freeze({FLOOR: 0, WALL: 1, ITEM: 2, EXIT: 3}),
+  symType: Object.freeze({FLOOR: 0, WALL: 1, ITEM: 2, EXITUP: 3, EXITDOWN: 4}),
 
   // Global variables
   levels: [],
@@ -32,6 +32,7 @@ module.exports = {
   loadingMessage: null,
   craftBtn: null,
   dropBtn: null,
+  removeBtn: null,
   wearBtn: null,
   wieldBtn: null,
 
@@ -78,6 +79,7 @@ module.exports = {
       this.inventoryElement = document.getElementById('inventory');
       this.craftBtn = document.getElementById('craft');
       this.dropBtn = document.getElementById('drop');
+      this.removeBtn = document.getElementById('remove');
       this.wearBtn = document.getElementById('wear');
       this.wieldBtn = document.getElementById('wield');
 
@@ -266,6 +268,21 @@ module.exports = {
         }
       };
 
+      // Add on click listener for remove button
+      this.removeBtn.onclick = () => {
+        let selectedItems = document.querySelectorAll(".selected");
+        if (selectedItems.length > 0) {
+          let itemsArray = [];
+          for (let item of selectedItems) {
+            let origName = item.innerHTML.split(' (')[0];
+            item.innerHTML = origName;
+            this.logWrite(`You Removed ${item.innerHTML}!`);
+          }
+        } else {
+          alert('Please select an item to remove/unequip');
+        }
+      };
+
       // Add on click listener for wear button
       this.wearBtn.onclick = () => {
         let selectedItems = document.querySelectorAll(".selected");
@@ -357,7 +374,7 @@ module.exports = {
 
   // Generate Items
   generateItems: function() {
-    if (this.levels[this.levelId].items.length === 0) {
+    if (this.levels[this.levelId].items.length !== this.MAXITEMS) {
       for(let i = 0; i < this.MAXITEMS; i++) {
         let index = Math.floor(ROT.RNG.getUniform() * this.levels[this.levelId].floorCells.length);
         let key = this.levels[this.levelId].floorCells.splice(index, 1)[0];
@@ -366,14 +383,22 @@ module.exports = {
       }
     }
 
-    if (!(this.levels[this.levelId].exit.hasOwnProperty('key') && this.levels[this.levelId].exit.hasOwnProperty('levelId'))) {
-      // Select the exit
+    if (!(this.levels[this.levelId].exitUp.hasOwnProperty('key') && this.levels[this.levelId].exitUp.hasOwnProperty('levelId'))) {
+      // Select the up exit
       let index = Math.floor(ROT.RNG.getUniform() * this.levels[this.levelId].floorCells.length);
       let key = this.levels[this.levelId].floorCells.splice(index, 1)[0];
-      this.levels[this.levelId].cells[key] = module.exports.symType.EXIT;
-      this.levels[this.levelId].exit.key = key;
-      this.levels[this.levelId].exit.levelId = (this.levelId + 1) % this.MAXLEVELS;
-      console.log(`${this.levelId} => ${this.levels[this.levelId].exit.levelId}`);
+      this.levels[this.levelId].cells[key] = module.exports.symType.EXITUP;
+      this.levels[this.levelId].exitUp.key = key;
+      this.levels[this.levelId].exitUp.levelId = this.levelId + 1;
+    }
+
+    if (!(this.levels[this.levelId].exitDown.hasOwnProperty('key') && this.levels[this.levelId].exitDown.hasOwnProperty('levelId')) && this.levelId > 0) {
+      // Select the down exit
+      let index = Math.floor(ROT.RNG.getUniform() * this.levels[this.levelId].floorCells.length);
+      let key = this.levels[this.levelId].floorCells.splice(index, 1)[0];
+      this.levels[this.levelId].cells[key] = module.exports.symType.EXITDOWN;
+      this.levels[this.levelId].exitDown.key = key;
+      this.levels[this.levelId].exitDown.levelId = this.levelId - 1;
     }
   },
 
@@ -403,8 +428,12 @@ module.exports = {
         this.display.draw(x, y, '!', '#FF00FF');
       } break;
 
-      case module.exports.symType.EXIT: {
-        this.display.draw(x, y, '<', '#66ccff');
+      case module.exports.symType.EXITUP: {
+        this.display.draw(x, y, '>', '#0000ff');
+      } break;
+
+      case module.exports.symType.EXITDOWN: {
+        this.display.draw(x, y, '<', '#0000ff');
       } break;
 
       default: {
@@ -530,32 +559,47 @@ module.exports.Player.prototype = {
   checkAction: function() {
     let key = this.px + this.py*module.exports.levels[module.exports.levelId].width;
     if(module.exports.levels[module.exports.levelId].cells[key] >= module.exports.symType.ITEM) {
-      if(key === module.exports.levels[module.exports.levelId].exit.key) {
-
-
+      let isExitUp = (key === module.exports.levels[module.exports.levelId].exitUp.key);
+      let isExitDown = (key === module.exports.levels[module.exports.levelId].exitDown.key);
+      let levelUp = module.exports.levels[module.exports.levelId].exitUp.levelId;
+      let levelDown = module.exports.levels[module.exports.levelId].exitDown.levelId;
+      if(isExitUp === true || isExitDown === true) {
         // Move to connected level
-        module.exports.logWrite(`Leaving Level ${module.exports.levelId + 1} and Entering Level ${module.exports.levels[module.exports.levelId].exit.levelId + 1}`, '#00ff00');
-        module.exports.levelId = module.exports.levels[module.exports.levelId].exit.levelId;
+        let newLevel = isExitUp === true ? levelUp : levelDown;
 
         // Lock the engine and remove keyboard listener
         module.exports.engine.lock();
         window.removeEventListener('keydown', this);
 
-        // Cleanup display
-        module.exports.cleanUp();
+        if (newLevel < module.exports.MAXLEVELS) {
+          module.exports.logWrite(`Leaving Level ${module.exports.levelId + 1} and Entering Level ${newLevel + 1}`, '#ff00ff');
 
-        // Create items
-        module.exports.generateItems();
+          module.exports.levelId = newLevel;
 
-        // Draw map
-        module.exports.drawMap();
+          // Cleanup display
+          module.exports.cleanUp();
 
-        // Create and draw the player and a creature
-        module.exports.player = module.exports.createEntity(module.exports.Player);
-        module.exports.creature = module.exports.createEntity(module.exports.Creature);
+          // Create items
+          module.exports.generateItems();
 
-        // Initialize new level
-        module.exports.init();
+          // Draw map
+          module.exports.drawMap();
+
+          // Create and draw the player and a creature
+          module.exports.player = module.exports.createEntity(module.exports.Player);
+          module.exports.creature = module.exports.createEntity(module.exports.Creature);
+
+          // Initialize new level
+          module.exports.init();
+        } else {
+          module.exports.logWrite(`Congratulations, you managed to escape alive!`, '#00ff00');
+
+          module.exports.craftBtn.onclick = () => {};
+          module.exports.dropBtn.onclick = () => {};
+          module.exports.removeBtn.onclick = () => {};
+          module.exports.wearBtn.onclick = () => {};
+          module.exports.wieldBtn.onclick = () => {};
+        }
       } else {
         module.exports.logWrite('You found an item');
       }
@@ -582,6 +626,7 @@ module.exports.Player.prototype = {
     keyMap[ROT.VK_NUMPAD1] = 5;   // Numpad 1 (DOWN+LEFT)
     keyMap[ROT.VK_NUMPAD4] = 6;   // Numpad 4 (LEFT)
     keyMap[ROT.VK_NUMPAD7] = 7;   // Numpad 7 (UP+LEFT)
+    keyMap[ROT.VK_NUMPAD5] = -1;  // Numpad 5 (WAIT)
 
     keyMap[ROT.VK_W] = 0;         // W Key (UP)
     keyMap[ROT.VK_E] = 1;         // E Key (UP+RIGHT)
@@ -591,6 +636,7 @@ module.exports.Player.prototype = {
     keyMap[ROT.VK_Z] = 5;         // Z Key (DOWN+LEFT)
     keyMap[ROT.VK_A] = 6;         // A Key (LEFT)
     keyMap[ROT.VK_Q] = 7;         // Q Key (UP+LEFT)
+    keyMap[ROT.VK_S] = -1;        // S Key (WAIT)
 
     // Check if action key is pressed
     let code = event.keyCode;
@@ -602,25 +648,32 @@ module.exports.Player.prototype = {
     /* one of numpad directions? */
     if(!(code in keyMap)) { return; }
 
-    /* is there a free space? */
-    let dir = ROT.DIRS[8][keyMap[code]];
-    let newX = this.px + dir[0];
-    let newY = this.py + dir[1];
-    let newKey = newX + newY*module.exports.levels[module.exports.levelId].width;
-    if(module.exports.levels[module.exports.levelId].cells[newKey] === module.exports.symType.WALL) { return; }
+    if(keyMap[code] >= 0) {
+      /* is there a free space? */
+      let dir = ROT.DIRS[8][keyMap[code]];
+      let newX = this.px + dir[0];
+      let newY = this.py + dir[1];
+      let newKey = newX + newY*module.exports.levels[module.exports.levelId].width;
+      if(module.exports.levels[module.exports.levelId].cells[newKey] === module.exports.symType.WALL) { return; }
 
-    let oldKey = this.px + this.py*module.exports.levels[module.exports.levelId].width;
-    module.exports.drawTile(oldKey, module.exports.levels[module.exports.levelId].cells[oldKey]);
+      let oldKey = this.px + this.py*module.exports.levels[module.exports.levelId].width;
+      module.exports.drawTile(oldKey, module.exports.levels[module.exports.levelId].cells[oldKey]);
 
-    this.px = newX;
-    this.py = newY;
-    this.draw();
-    window.removeEventListener('keydown', this);
-    module.exports.engine.unlock();
+      this.px = newX;
+      this.py = newY;
+      this.draw();
+      window.removeEventListener('keydown', this);
+      module.exports.engine.unlock();
+    } else {
+      // The player decided to wait a turn
+      this.draw();
+      window.removeEventListener('keydown', this);
+      module.exports.engine.unlock();
+    }
   },
 
   draw: function() {
-    module.exports.display.draw(this.px, this.py, '@', '#ff0');
+    module.exports.display.draw(this.px, this.py, '@', '#ffff00');
   }
 };
 
@@ -648,12 +701,7 @@ module.exports.Creature.prototype = {
     astar.compute(this.cx, this.cy, pathCallback);
 
     path.shift(); // Remove the creatures position
-    if (path.length === 1) {
-      module.exports.logWrite('You were captured by the Creature!', '#ff0000');
-      module.exports.logWrite('Game Over, better luck next time.', '#ff0000');
-      module.exports.engine.lock();
-      window.removeEventListener('keydown', module.exports.Player);
-    } else {
+    if (path.length > 1) {
       px = path[0][0];
       py = path[0][1];
       let key = this.cx + this.cy*module.exports.levels[module.exports.levelId].width;
@@ -661,6 +709,17 @@ module.exports.Creature.prototype = {
       this.cx = px;
       this.cy = py;
       this.draw();
+    } else {
+      module.exports.logWrite('You were captured by the Creature!', '#ff0000');
+      module.exports.logWrite('Game Over, better luck next time.', '#ff0000');
+      module.exports.engine.lock();
+      window.removeEventListener('keydown', module.exports.Player);
+
+      module.exports.craftBtn.onclick = () => {};
+      module.exports.dropBtn.onclick = () => {};
+      module.exports.removeBtn.onclick = () => {};
+      module.exports.wearBtn.onclick = () => {};
+      module.exports.wieldBtn.onclick = () => {};
     }
   }
 }

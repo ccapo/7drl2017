@@ -2,8 +2,6 @@ const electron = require('electron');
 // Module to control application life.
 const app = electron.app;
 
-app.setName('EscapeCraft')
-
 // Module to create native browser window.
 const BrowserWindow = electron.BrowserWindow;
 
@@ -135,7 +133,7 @@ function createWindow() {
             const options = {
               type: 'info',
               title: 'About EscapeCraft',
-              message: 'The goal is to survive and escape by crafting weapons/tools\n\nCreated for the 2017 7DRL Challenge\n\nWritten by Chris Capobianco',
+              message: 'Created for the 2017 7DRL Challenge\n\nThe goal is to survive and escape by crafting weapons/tools\n\nWritten by Chris Capobianco',
               buttons: ['OK']
             };
             dialog.showMessageBox(options);
@@ -147,7 +145,7 @@ function createWindow() {
             const options = {
               type: 'info',
               title: 'Controls',
-              message: 'The player can move using either the arrow/WASD keys\n\nThe Enter key is the action key\n\nInteract with the inventory using the mouse',
+              message: 'The player can move in all 8 directions using:\n\nArrow, Home, End, PgUp and PgDown keys\nWAXD+QEZC keys and S waits a turn\nNumPad keys and 5 waits a turn\n\nThe Enter or Space keys picks up items or uses stairs\n\nThe inventory and crafting are handled using the mouse\n\nThe game is turn-based, with a 5 second timeout',
               buttons: ['OK']
             };
             dialog.showMessageBox(options);
@@ -283,3 +281,5 @@ app.on('activate', () => {
     createWindow();
   }
 });
+
+app.setName('EscapeCraft');

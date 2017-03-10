@@ -1,6 +1,6 @@
 <html>
-  <script src='rot.min.js'></script>
   <script type='text/javascript'>
+    const ROT = require('rot-js');
     const ipc = require('electron').ipcRenderer;
     const BrowserWindow = require('electron').remote.BrowserWindow;
 
@@ -18,7 +18,7 @@
       window.close();
     });
 
-    const symType = Object.freeze({FLOOR: 0, WALL: 1, ITEM: 2, EXIT: 3});
+    const symType = Object.freeze({FLOOR: 0, WALL: 1, ITEM: 2, EXITUP: 3, EXITDOWN: 4});
     let width = null;
     let height = null;
     let cells = [];
@@ -107,7 +107,8 @@
         floorCells: floorCells,
         items: [],
         creatures: [],
-        exit: {}
+        exitUp: {},
+        exitDown: {}
       };
     }
 
