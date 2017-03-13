@@ -18,7 +18,7 @@
       window.close();
     });
 
-    const symType = Object.freeze({FLOOR: 0, WALL: 1, ITEM: 2, EXITUP: 3, EXITDOWN: 4});
+    const symType = Object.freeze({FLOOR: 0, WALL: 1, EXITUP: 2, EXITDOWN: 3});
     let width = null;
     let height = null;
     let cells = [];
@@ -47,7 +47,7 @@
 
       // Loop map creation until fraction of cells is greater than 50% floor cells.
       let fraction = 0.0;
-      while(fraction < 0.5) {
+      while(fraction < 0.4) {
         let mapCA = new ROT.Map.Cellular(width, height);
 
         // Cells with 50% probability

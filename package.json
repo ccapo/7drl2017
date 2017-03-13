@@ -15,6 +15,6 @@
     "rot-js": "git+https://github.com/ccapo/rot.js.git#npm-deploy"
   },
     "scripts": {
-    "start": "electron ."
+    "start": "electron main.js"
   }
 }

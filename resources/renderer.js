@@ -2,23 +2,23 @@ const BrowserWindow = require('electron').remote.BrowserWindow;
 const ipcRenderer = require('electron').ipcRenderer;
 const path = require('path');
 const url = require('url');
-const Game = require('./game');
 
 const hiddenWH = 400;
-const displayWidth = 64;
-const displayHeight = 55;
-const mapWidth = Math.floor(3*displayWidth/2);
-const mapHeight = Math.floor(3*displayHeight/2);
-console.log(`displayWidth: ${displayWidth}, displayHeight: ${displayHeight}`);
-console.log(`mapWidth: ${mapWidth}, mapHeight: ${mapHeight}`);
+const displayOptions = {
+  displayWidth: 64,
+  displayHeight: 55,
+  mapWidth: 2*64,
+  mapHeight: 2*55
+};
+let game = require('./game').game;
 
 function generateFirstLevel(windowId) {
-  // Reset level data
-  Game.levels = [];
+  console.log(`Generating Level 1/${game.MAXLEVELS}`);
 
-  console.log(`Generating Level 1/${Game.MAXLEVELS}`);
+  // Clean up game components
+  game.cleanUp(true);
 
-  let win = new BrowserWindow({ width: hiddenWH, height: hiddenWH, show: false });
+  let win = new BrowserWindow({width: hiddenWH, height: hiddenWH, show: false});
   win.loadURL(url.format({
     pathname: path.join(__dirname, 'generateMap.html'),
     protocol: 'file:',
@@ -28,15 +28,15 @@ function generateFirstLevel(windowId) {
   win.webContents.on('did-finish-load', () => {
     //const seed = 1442796044743;
     const seed = Date.now();
-    const options = {seed: seed, displayWidth: displayWidth, displayHeight: displayHeight, mapWidth: mapWidth, mapHeight: mapHeight, windowId: windowId};
+    const options = Object.assign(displayOptions, {seed: seed, windowId: windowId});
     win.webContents.send('generate-first-level', options, windowId);
   });
 }
 
 function generateNewLevel(windowId) {
-  console.log(`Generating Level ${Game.levels.length + 1}/${Game.MAXLEVELS}`);
+  console.log(`Generating Level ${game.maps.length + 1}/${game.MAXLEVELS}`);
 
-  let win = new BrowserWindow({ width: hiddenWH, height: hiddenWH, show: false });
+  let win = new BrowserWindow({width: hiddenWH, height: hiddenWH, show: false});
   win.loadURL(url.format({
     pathname: path.join(__dirname, 'generateMap.html'),
     protocol: 'file:',
@@ -46,47 +46,27 @@ function generateNewLevel(windowId) {
   win.webContents.on('did-finish-load', () => {
     //const seed = 1442796044743;
     const seed = Date.now();
-    const options = {seed: seed, displayWidth: displayWidth, displayHeight: displayHeight, mapWidth: mapWidth, mapHeight: mapHeight, windowId: windowId};
+    const options = Object.assign(displayOptions, {seed: seed, windowId: windowId});
     win.webContents.send('generate-new-level', options, windowId);
   });
 }
 
 ipcRenderer.on('new-game', (event, windowId) => {
-  Game.cleanUp(true);
+  console.log('New Game');
   generateFirstLevel(windowId);
 });
 
 ipcRenderer.on('first-level-generated', (event, options, map) => {
-  // Remove loading animation and message
-  let element = document.getElementById('loading-animation');
-  element.classList.remove('pong-loader');
-  element = document.getElementById('loading-message');
-  element.innerHTML = '';
+  // Store new level
+  game.maps.push(map);
 
-  // Initialize canvas elements
-  Game.initCanvas(map);
-
-  console.log(`Generated Level ${Game.levels.length}/${Game.MAXLEVELS}`);
-
-  // Create items
-  Game.generateItems();
-
-  // Create and draw the player and a creature
-  Game.player = Game.createEntity(Game.Player);
-  Game.creature = Game.createEntity(Game.Creature);
-
-  Game.moveCamera(Game.player.px, Game.player.py);
-
-  // Draw map, the player and the creature
-  Game.drawMap();
-  Game.player.draw();
-  Game.creature.draw();
+  console.log(`Generated Level ${game.maps.length}/${game.MAXLEVELS}`);
 
   // Initialize game
-  Game.init(true);
+  game.init();
 
-  // If we haven't generated enough levels
-  if (Game.levels.length < Game.MAXLEVELS) {
+  // If we haven't generated enough maps
+  if (game.maps.length < game.MAXLEVELS) {
     // Generate next level
     generateNewLevel(options.windowId);
   } else {
@@ -97,12 +77,12 @@ ipcRenderer.on('first-level-generated', (event, options, map) => {
 
 ipcRenderer.on('new-level-generated', (event, options, map) => {
   // Store new level
-  Game.levels.push(map);
+  game.maps.push(map);
 
-  console.log(`Generated Level ${Game.levels.length}/${Game.MAXLEVELS}`);
+  console.log(`Generated Level ${game.maps.length}/${game.MAXLEVELS}`);
 
-  // If we haven't generated enough levels
-  if (Game.levels.length < Game.MAXLEVELS) {
+  // If we haven't generated enough maps
+  if (game.maps.length < game.MAXLEVELS) {
     // Generate next level
     generateNewLevel(options.windowId);
   } else {

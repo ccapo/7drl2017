@@ -145,7 +145,7 @@ function createWindow() {
             const options = {
               type: 'info',
               title: 'Controls',
-              message: 'The player can move in all 8 directions using:\n\nArrow, Home, End, PgUp and PgDown keys\nWAXD+QEZC keys and S waits a turn\nNumPad keys and 5 waits a turn\n\nThe Enter or Space keys picks up items or uses stairs\n\nThe inventory and crafting are handled using the mouse\n\nThe game is turn-based, with a 5 second timeout',
+              message: 'The player can move in all 8 directions using:\n\nArrow, Home, End, PgUp and PgDown keys\nWAXD+QEZC keys and S waits a turn\nNumPad keys and 5 waits a turn\n\nThe Enter or Space keys picks up items or uses stairs\n\nThe inventory and crafting are handled using the mouse',
               buttons: ['OK']
             };
             dialog.showMessageBox(options);
