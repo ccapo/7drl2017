@@ -623,22 +623,23 @@ let Game = class Game {
       let selectedItems = document.querySelectorAll(".selected");
       if (selectedItems.length > 0) {
         let itemsArray = [];
-        for (let item of selectedItems) {
-          this.logWrite(`You Dropped ${item.innerHTML}!`);
+        for (let selectedItem of selectedItems) {
           let index = -1;
           for(let i = 0; i < this.inventory.length; i++) {
             let inv = this.inventory[i];
-            if (inv.id === parseInt(item.dataset.id)) {
+            if (inv.id === parseInt(selectedItem.dataset.id)) {
               index = i;
             }
           }
           if (index > -1) {
+            this.logWrite(`You Dropped ${selectedItem.innerHTML}!`);
             this.inventory.splice(index, 1);
+            let itemOptions = Object.assign({x: this.player.x, y: this.player.y, symbol: '?', colour: '#FFFFFF'}, game.itemDictionary[selectedItem.dataset.id]);
+            let item = new Item(itemOptions);
+            game.maps[game.mapId].items.push(item);
+            selectedItem.remove();
           }
-          //let itemOptions = Object.assign({x: this.player.x, y: this.player.y, symbol: '?', colour: '#FFFFFF'}, game.itemDictionary[item.id.toString()]);
-          //let item = new Item(itemOptions);
-          //game.maps[game.mapId].items.push(item);
-          item.remove();
+
         }
       } else {
         alert('Please select an item to drop');
@@ -665,7 +666,7 @@ let Game = class Game {
       let selectedItems = document.querySelectorAll(".selected");
       if (selectedItems.length === 1) {
         // Use item
-        game.logWrite(`I Don't Know How To Use That`);
+        game.logWrite("I Don't Know How To Use That");
       } else {
         alert('Please select an item to use');
       }
