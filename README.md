@@ -7,7 +7,7 @@
     * Have access to hearth
 * Use scent/goal tracking for creature AI
 * GUI
-    * Display: HP, ATK, DEF
+    * Display: HP, STR, DEX and CON
     * Inventory and crafting menus
     * Make it easy to craft items in crucible
 * Reserve time to test and tweak game balance
