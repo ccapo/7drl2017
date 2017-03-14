@@ -84,6 +84,8 @@ let Entity = class Entity extends Obj {
     // Derived attributes
     this.hpmax = 5*(this.str + this.con);
     this.hp = this.hpmax;
+    this.atk = Math.floor((this.str + this.dex + this.con)/3);
+    this.def = Math.max(Math.floor((this.str + this.dex + this.con)/3) - 2, 0);
   }
 
   getSpeed() {
@@ -101,9 +103,13 @@ let Player = class Player extends Entity {
     this.name = 'Player';
     this.symbol = '@';
     this.colour = '#FFFF00';
-    this.str = 2;
+    this.str = 3;
     this.dex = 3;
-    this.con = 2;
+    this.con = 3;
+    this.hpmax = 5*(this.str + this.con);
+    this.hp = this.hpmax;
+    this.atk = Math.floor((this.str + this.dex + this.con)/3);
+    this.def = Math.max(Math.floor((this.str + this.dex + this.con)/3) - 2, 0);
   }
 
   act() {
@@ -116,11 +122,13 @@ let Player = class Player extends Entity {
 
     // Check if the player is on top of an item
     let foundItemFlag = false;
-    let foundItem = false;
+    let foundItem = null;
+    let indexItem = null;
     for(let item of game.maps[game.mapId].items) {
       if(this.x === item.x && this.y === item.y) {
         foundItemFlag = true;
         foundItem = item;
+        indexItem = game.maps[game.mapId].items.indexOf(foundItem);
       }
     }
 
@@ -186,7 +194,17 @@ let Player = class Player extends Entity {
           game.wieldBtn.onclick = () => {};
         }
       } else {
-        game.logWrite(`You Picked Up ${foundItem.name}`);
+        game.logWrite(`You Pick Up ${foundItem.name}`);
+
+        // Add new item to end of list
+        game.maps[game.mapId].items.splice(indexItem, 1);
+        game.inventory.push(foundItem);
+        let newInventory = document.createElement("LI");
+        let textNode = document.createTextNode(foundItem.name);
+        newInventory.appendChild(textNode);
+        newInventory.dataset.id = foundItem.id;
+        newInventory.onclick = () => {newInventory.classList.toggle('selected')};
+        game.inventoryElement.appendChild(newInventory);
       }
     }
   }
@@ -248,15 +266,43 @@ let Player = class Player extends Entity {
 
       let foundCreatureFlag = false;
       let foundCreature = null;
+      let indexCreature = null;
       for(let creature of game.maps[game.mapId].creatures) {
         if(newX === creature.x && newY === creature.y && creature.blocks === true) {
           foundCreatureFlag = true;
           foundCreature = creature;
+          indexCreature = game.maps[game.mapId].creatures.indexOf(foundCreature);
         }
       }
 
-      // Insert combat here
+      // Check if we collide with a wall or a creature
       if(game.maps[game.mapId].cells[newKey] === game.symType.WALL || foundCreatureFlag === true) {
+        // If we collide with a creature
+        if(foundCreatureFlag === true) {
+          if (foundCreature.name !== 'A Hearth') {
+            // Attack creature
+            let maxDamage = Math.max(this.atk - foundCreature.def, 0);
+            let damage = Math.floor(Math.random() * maxDamage);
+            if (damage > 0) {
+              foundCreature.hp -= damage;
+              foundCreature.hp = Math.max(foundCreature.hp, 0);
+              game.logWrite(`Player Attacks ${foundCreature.name} For ${damage} Damage`);
+              if(foundCreature.hp === 0) {
+                game.logWrite(`You Killed The ${foundCreature.name}!`, '#FF0000');
+                game.scheduler.remove(foundCreature);
+                game.maps[game.mapId].creatures.splice(indexCreature, 1);
+                let itemOptions = Object.assign({x: foundCreature.x, y: foundCreature.y, symbol: '%', colour: '#FF0000'}, game.itemDictionary['8']);
+                let item = new Item(itemOptions);
+                game.maps[game.mapId].items.push(item);
+                item.render();
+              }
+            } else {
+              game.logWrite(`Player's Attack Was Ineffectual`);
+            }
+          } else {
+            game.logWrite(`Player Runs Into ${foundCreature.name}`);
+          }
+        }
         window.removeEventListener('keydown', this);
         game.engine.unlock();
         return;
@@ -324,25 +370,37 @@ let Creature = class Creature extends Entity {
         this.str = 1;
         this.dex = 1;
         this.con = 1;
-        this.minSquaredDistance = 2*2;
+        this.hpmax = 5*(this.str + this.con);
+        this.hp = this.hpmax;
+        this.atk = Math.floor((this.str + this.dex + this.con)/3);
+        this.def = Math.max(Math.floor((this.str + this.dex + this.con)/3) - 2, 0);
+        this.minSquaredDistance = 6*6;
       } break;
       case game.aiType.NORMAL: {
         this.name = 'Orc';
         this.symbol = 'o';
         this.colour = '#00FF00';
         this.str = 2;
-        this.dex = 1;
+        this.dex = 2;
         this.con = 2;
-        this.minSquaredDistance = 4*4;
+        this.hpmax = 5*(this.str + this.con);
+        this.hp = this.hpmax;
+        this.atk = Math.floor((this.str + this.dex + this.con)/3);
+        this.def = Math.max(Math.floor((this.str + this.dex + this.con)/3) - 2, 0);
+        this.minSquaredDistance = 8*8;
       } break;
       case game.aiType.AGGRESSIVE: {
         this.name = 'Giant';
         this.symbol = 'G';
         this.colour = '#FF0000';
-        this.str = 3;
+        this.str = 6;
         this.dex = 2;
-        this.con = 3;
-        this.minSquaredDistance = 8*8;
+        this.con = 6;
+        this.hpmax = 5*(this.str + this.con);
+        this.hp = this.hpmax;
+        this.atk = Math.floor((this.str + this.dex + this.con)/3);
+        this.def = Math.max(Math.floor((this.str + this.dex + this.con)/3) - 2, 0);
+        this.minSquaredDistance = 10*10;
       } break;
       default: {
         console.log(`Unrecognized AI Type: ${this.aiType}`);
@@ -357,22 +415,20 @@ let Creature = class Creature extends Entity {
 
     // Only persue the player if within 10 units
     if (r2 < this.minSquaredDistance) {
-      // Add property to skip this creature in the following loop
-      this.skipCreatureFlag = true;
+      // Store creature's position so it avoid itself
+      game.cx = this.x;
+      game.cy = this.y;
       let passableCallback = function(x, y) {
         let isNotWall = (game.maps[game.mapId].cells[x + y*game.mapWidth] !== game.symType.WALL);
         let isNotCreature = true;
         for(let creature of game.maps[game.mapId].creatures) {
-          if(x === creature.x && y === creature.y && creature.blocks === true) {
+          if(x !== game.cx && y !== game.cy && x === creature.x && y === creature.y && creature.blocks === true) {
             isNotCreature = false;
           }
         }
-        return (isNotWall && isNotCreature);
+        return (isNotWall === true && isNotCreature === true);
       }
       let astar = new ROT.Path.AStar(px, py, passableCallback, {topology: 8});
-
-      // Delete this property so other creatures do not see it
-      delete this.skipCreatureFlag;
 
       let path = [];
       let pathCallback = function(x, y) {
@@ -397,19 +453,27 @@ let Creature = class Creature extends Entity {
         game.renderScene();
       } else {
         // Attack player
-        console.log(`${this.name} Attacks Player For ${Math.floor(Math.random() * 10)} Damage`);
-
-        /*game.logWrite(`You Were Captured By The ${this.name}!`, '#FF0000');
-        game.logWrite('Game Over, Better Luck Next Time', '#FF0000');
-
-        game.engine.lock();
-        window.removeEventListener('keydown', game.player);
-
-        game.craftBtn.onclick = () => {};
-        game.dropBtn.onclick = () => {};
-        game.removeBtn.onclick = () => {};
-        game.wearBtn.onclick = () => {};
-        game.wieldBtn.onclick = () => {};*/
+        let maxDamage = Math.max(this.atk - game.player.def, 0);
+        let damage = Math.floor(Math.random() * maxDamage);
+        if (damage > 0) {
+          game.player.hp -= damage;
+          game.player.hp = Math.max(game.player.hp, 0);
+          game.statusWrite(game.player);
+          game.logWrite(`${this.name} Attacks For ${damage} Damage`);
+          if(game.player.hp === 0) {
+            game.engine.lock();
+            window.removeEventListener('keydown', game.player);
+            game.logWrite(`You Were Killed By The ${this.name}!`, '#FF0000');
+            game.logWrite('Game Over, Better Luck Next Time', '#FF0000');
+            game.craftBtn.onclick = () => {};
+            game.dropBtn.onclick = () => {};
+            game.removeBtn.onclick = () => {};
+            game.wearBtn.onclick = () => {};
+            game.wieldBtn.onclick = () => {};
+          }
+        } else {
+          game.logWrite(`${this.name}'s Attack Was Ineffectual`);
+        }
       }
     }
   }
@@ -478,7 +542,7 @@ let Game = class Game {
     this.itemDictionary['5'] = {id: 5, name: 'A Stick', ingredients: []};
     this.itemDictionary['6'] = {id: 6, name: 'Some Vines', ingredients: []};
     this.itemDictionary['7'] = {id: 7, name: 'Some Metal', ingredients: []};
-    this.itemDictionary['8'] = {id: 8, name: 'A Dead Animal', ingredients: []};
+    this.itemDictionary['8'] = {id: 8, name: 'A Carcass', ingredients: []};
 
     // Second order items
     this.itemDictionary['1+2'] = {id: 9, name: 'Some Sulphur', ingredients: [2]};
@@ -547,8 +611,6 @@ let Game = class Game {
             newInventory.dataset.id = newItem.id;
             newInventory.onclick = () => {newInventory.classList.toggle('selected')};
             this.inventoryElement.appendChild(newInventory);
-          } else {
-            this.logWrite(`${newItem.name} Already in Inventory`);
           }
         }
       } else {
@@ -573,6 +635,9 @@ let Game = class Game {
           if (index > -1) {
             this.inventory.splice(index, 1);
           }
+          //let itemOptions = Object.assign({x: this.player.x, y: this.player.y, symbol: '?', colour: '#FFFFFF'}, game.itemDictionary[item.id.toString()]);
+          //let item = new Item(itemOptions);
+          //game.maps[game.mapId].items.push(item);
           item.remove();
         }
       } else {
@@ -600,12 +665,7 @@ let Game = class Game {
       let selectedItems = document.querySelectorAll(".selected");
       if (selectedItems.length === 1) {
         // Use item
-        //for (let item of selectedItems) {
-        //  this.logWrite(`You Wear ${item.innerHTML}!`);
-        //  item.innerHTML = item.innerHTML + ' (worn)';
-        //  item.classList.remove('selected');
-        //}
-        // Select direction to use item
+        game.logWrite(`I Don't Know How To Use That`);
       } else {
         alert('Please select an item to use');
       }
@@ -662,11 +722,23 @@ let Game = class Game {
         this.inventoryElement.removeChild(this.inventoryElement.firstChild);
       }
 
-      // Empty maps and inventory
+      // Empty maps and base inventory
       this.maps = [];
       this.mapId = 0;
-      this.inventory = [];
+      this.inventory = [
+        this.itemDictionary['1']
+      ];        
       this.hearth = null;
+
+      // Add inventory to menu
+      for (let item of this.inventory) {
+        let newInventory = document.createElement("LI");
+        let textNode = document.createTextNode(item.name);
+        newInventory.appendChild(textNode);
+        newInventory.dataset.id = item.id;
+        newInventory.onclick = () => {newInventory.classList.toggle('selected')};
+        this.inventoryElement.appendChild(newInventory);
+      }
     }
 
     if (this.status) {
@@ -680,7 +752,6 @@ let Game = class Game {
     }
 
     if (this.log) {
-      //this.log.messages = [];
       this.log.clear();
     }
 
@@ -1012,9 +1083,8 @@ let Game = class Game {
 
     // Create hearth, if necessary
     if(this.mapId === 0 && this.hearth === null) {
-      this.hearth = new Entity({x: this.player.x, y: this.player.y - 1, symbol: '=', colour: '#FF9933', dex: 0});
+      this.hearth = new Entity({x: this.player.x, y: this.player.y - 1, symbol: '=', colour: '#FF9933', name: 'A Hearth'});
       this.maps[this.mapId].creatures.push(this.hearth);
-      this.scheduler.add(this.hearth, true);
     }
 
     // Create creatures, if necessary
@@ -1070,19 +1140,20 @@ let Game = class Game {
       newItem = this.itemDictionary[key];
       this.logWrite(`You Crafted ${newItem.name}!`, '#0000ff');
     } else {
-      this.logWrite(`Hmm ... that didn't work`);
+      this.logWrite(`Hmm ... That Didn't Work`);
     }
 
     return newItem;
   }
 };
 
-game = new Game({
+const options = {
   displayWidth: 64,
   displayHeight: 55,
   mapWidth: 2*64,
   mapHeight: 2*55
-});
+};
+game = new Game(options);
 
 // Export game instance
 module.exports.game = game;

@@ -4,13 +4,13 @@ const path = require('path');
 const url = require('url');
 
 const hiddenWH = 400;
-const displayOptions = {
-  displayWidth: 64,
-  displayHeight: 55,
-  mapWidth: 2*64,
-  mapHeight: 2*55
-};
 let game = require('./game').game;
+const displayOptions = Object.assign({}, {
+  displayWidth: game.displayWidth,
+  displayHeight: game.displayHeight,
+  mapWidth: game.mapWidth,
+  mapHeight: game.mapHeight
+});
 
 function generateFirstLevel(windowId) {
   console.log(`Generating Level 1/${game.MAXLEVELS}`);
