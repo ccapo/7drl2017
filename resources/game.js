@@ -1054,6 +1054,11 @@ let Game = class Game {
       this.log.drawText(this.displayWidth - 1, y, '|');
     }
 
+    this.log.drawText(0, 0, '+');
+    this.log.drawText(0, this.logHeight - 1, '+');
+    this.log.drawText(this.displayWidth - 1, 0, '+');
+    this.log.drawText(this.displayWidth - 1, this.logHeight - 1, '+');
+
     // Title for message log
     this.log.drawText(2, 0, 'Message Log');
 
